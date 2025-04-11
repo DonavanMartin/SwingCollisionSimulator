@@ -1,4 +1,8 @@
-markdown
+⚠️ **AVERTISSEMENT**
+
+> Ce projet, **SwingCollisionSimulator**, s’inspire d’observations de situations réelles impliquant des balançoires. Il est conçu exclusivement à des **fins éducatives, de simulation et d’analyse**. L’analyse a été réalisée par un **inspecteur certifié canadien des aires de jeux (CPSI)** conformément à la norme **CSA Z614:20**.  
+>  
+> **IL EST STRICTEMENT INTERDIT DE REPRODUIRE CE PROJET DANS LA RÉALITÉ.** Toute tentative pourrait entraîner des **blessures graves ou des accidents**. Toute reproduction est **fortement déconseillée** et se fait aux **risques et périls de l’utilisateur**.
 
 # SwingCollisionSimulator
 
@@ -33,13 +37,6 @@ markdown
    cd SwingCollisionSimulator
    ```
 
-Voici toutes les informations regroupées dans un seul fichier Markdown :
-
-````markdown
-# Swing Collision Simulator
-
-## Installation
-
 ### Installez les dépendances :
 
 Assurez-vous que `matplotlib` est installé. Vous pouvez l’installer avec pip :
@@ -47,7 +44,6 @@ Assurez-vous que `matplotlib` est installé. Vous pouvez l’installer avec pip 
 ```bash
 pip install matplotlib
 ```
-````
 
 ### Configurer `tkinter` (si nécessaire) :
 
@@ -116,13 +112,11 @@ L’animation s’arrête lorsque l’angle d’impact est atteint.
 
 ### Interface principale
 
-![Interface principale](screenshots/interface.png)
+<img src="screenshots/interface.png" alt="Interface principale" width="500">
 
 ### Animation des balançoires
 
 ![Animation](screenshots/animation.png)
-
-> _(Ajoutez des captures d’écran réelles en plaçant les images dans un dossier `screenshots/` et en mettant à jour les liens ci-dessus.)_
 
 ---
 
@@ -214,7 +208,7 @@ Voir le fichier `LICENSE` pour plus de détails.
 
 ## Auteurs
 
-- Donavan Martin, ing. – Créateur initial – [Votre Profil GitHub](https://github.com/)
+- Donavan Martin, Ing., Inspecteur certifié CPSI - Créateur initial – [Votre Profil GitHub](https://github.com/)
 
 ```
 
