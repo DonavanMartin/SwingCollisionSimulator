@@ -211,5 +211,3 @@ Voir le fichier `LICENSE` pour plus de détails.
 - Donavan Martin, Ing., Inspecteur certifié CPSI - Créateur initial – [Votre Profil GitHub](https://github.com/)
 
 ```
-
-```
