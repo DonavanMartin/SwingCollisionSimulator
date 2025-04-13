@@ -9,6 +9,18 @@ import threading
 import time
 from PIL import Image, ImageTk
 
+from enum import Enum
+
+# Define RiskLevel enum
+class RiskLevel(Enum):
+    IMPROBABLE = "Improbable (faible)"
+    POSSIBLE = "Possible (moyen)"
+    PROBABLE = "Probable (élevé)"
+    TRES_PROBABLE = "Très probable (extrême))"
+
+    def __str__(self):
+        return self.value
+
 # Constantes physiques
 G = 9.81
 COLLISION_TIME = 0.05
@@ -25,8 +37,8 @@ ANTHROPOMETRIC_DATA = {
 }
 
 DECAPITATION_THRESHOLD = (5, 10)
-CERVICAL_FRACTURE_THRESHOLD = (3, 6)  # MPa range for cervical spine fracture
-CONCUSSION_ACCELERATION_THRESHOLD = 80  # g (approx. 784 m/s²) for concussion risk
+CERVICAL_FRACTURE_THRESHOLD = (3, 6)
+CONCUSSION_ACCELERATION_THRESHOLD = 80  # g (approx. 784 m/s²)
 
 # Variables globales
 animation_running = False
@@ -35,6 +47,8 @@ target_angle = 0
 max_angle = 0
 toggle_button = None
 force = 0
+velocity1_global = 0
+velocity2_global = 0
 
 def calculate_max_angle(height, length=LENGTH_SWING):
     if height > length:
@@ -74,40 +88,40 @@ def assess_decapitation_risk(pressure_mpa, age):
     vertebrae_strength = ANTHROPOMETRIC_DATA[age]["vertebrae_strength_mpa"]
     threshold_min, threshold_max = DECAPITATION_THRESHOLD
     if pressure_mpa < threshold_min:
-        return "Improbable"
+        return RiskLevel.IMPROBABLE
     elif threshold_min <= pressure_mpa <= threshold_max:
         if pressure_mpa < vertebrae_strength[0]:
-            return "Improbable"
+            return RiskLevel.IMPROBABLE
         elif pressure_mpa <= vertebrae_strength[1]:
-            return "Possible"
+            return RiskLevel.POSSIBLE
         else:
-            return "Probable"
+            return RiskLevel.PROBABLE
     else:
-        return "Très probable"
+        return RiskLevel.TRES_PROBABLE
 
 def assess_cervical_fracture_risk(pressure_mpa, age):
     vertebrae_strength = ANTHROPOMETRIC_DATA[age]["vertebrae_strength_mpa"]
     threshold_min, threshold_max = CERVICAL_FRACTURE_THRESHOLD
     if pressure_mpa < threshold_min:
-        return "Improbable"
+        return RiskLevel.IMPROBABLE
     elif threshold_min <= pressure_mpa <= threshold_max:
         if pressure_mpa < vertebrae_strength[0]:
-            return "Improbable"
+            return RiskLevel.IMPROBABLE
         elif pressure_mpa <= vertebrae_strength[1]:
-            return "Possible"
+            return RiskLevel.POSSIBLE
         else:
-            return "Probable"
+            return RiskLevel.PROBABLE
     else:
-        return "Très probable"
+        return RiskLevel.TRES_PROBABLE
 
 def assess_concussion_risk(acceleration_ms2, age):
     acceleration_g = acceleration_ms2 / 9.81
     if acceleration_g < CONCUSSION_ACCELERATION_THRESHOLD * 0.8:
-        return "Improbable"
+        return RiskLevel.IMPROBABLE
     elif acceleration_g < CONCUSSION_ACCELERATION_THRESHOLD:
-        return "Possible"
+        return RiskLevel.POSSIBLE
     else:
-        return "Probable"
+        return RiskLevel.PROBABLE
 
 def run_simulation():
     try:
@@ -143,9 +157,18 @@ def run_simulation():
         # Convert masses to kg
         mass1_kg = mass1_lbs * LBS_TO_KG
         mass2_kg = mass2_lbs * LBS_TO_KG
+        # Calculate velocities for both swings
+        global velocity1_global, velocity2_global
         velocity1 = calculate_velocity(angle, max_height, v_init1)
+        velocity2 = calculate_velocity(angle, max_height, v_init2)
+        velocity1_global = velocity1
+        velocity2_global = velocity2
+        # Calculate relative velocity for collision
+        relative_velocity = abs(velocity1 + velocity2)  # Head-on collision
+        # Use reduced mass for force calculation
+        reduced_mass = (mass1_kg * mass2_kg) / (mass1_kg + mass2_kg) if (mass1_kg + mass2_kg) != 0 else mass1_kg
         global force
-        force = calculate_force(velocity1, mass1_kg)
+        force = calculate_force(relative_velocity, reduced_mass)
         surface_cm2 = calculate_impact_surface(age, impact_type)
         pressure_mpa = calculate_pressure(force, surface_cm2)
         head_mass = ANTHROPOMETRIC_DATA[age]["head_mass_kg"]
@@ -163,7 +186,9 @@ def run_simulation():
         result_text.insert(tk.END, f"Angle max (calculé, par rapport à la verticale) : {max_angle:.1f}°\n")
         result_text.insert(tk.END, f"Angle d’impact (par rapport à l’horizontal) : {angle_horizontal:.1f}°\n")
         result_text.insert(tk.END, f"Type d’impact : {impact_type}\n")
-        result_text.insert(tk.END, f"Vitesse d’impact : {velocity1:.2f} m/s\n")
+        result_text.insert(tk.END, f"Vitesse d’impact balançoire 1 : {velocity1:.2f} m/s\n")
+        result_text.insert(tk.END, f"Vitesse d’impact balançoire 2 : {velocity2:.2f} m/s\n")
+        result_text.insert(tk.END, f"Vitesse relative d’impact : {relative_velocity:.2f} m/s\n")
         result_text.insert(tk.END, f"Force d’impact : {force:.2f} N\n")
         result_text.insert(tk.END, f"Surface d’impact : {surface_cm2:.2f} cm²\n")
         result_text.insert(tk.END, f"Pression exercée : {pressure_mpa:.2f} MPa\n")
@@ -177,7 +202,7 @@ def load_texture(image_path):
     try:
         image = pygame.image.load(image_path)
         print(f"Image loaded: {image_path}, size: {image.get_size()}")
-        image = image.convert_alpha()  # Ensure RGBA format
+        image = image.convert_alpha()
         image_data = pygame.image.tostring(image, "RGBA", 1)
         width, height = image.get_size()
         texture_id = glGenTextures(1)
@@ -194,9 +219,9 @@ def load_texture(image_path):
         return None
 
 def draw_swing(x_pivot, y_pivot, angle_rad, length, color, platform_width):
-    glDisable(GL_DEPTH_TEST)  # Disable depth test for 2D lines
+    glDisable(GL_DEPTH_TEST)
     glColor3f(*color)
-    glLineWidth(5.0)  # Thicker lines for visibility
+    glLineWidth(5.0)
     x_end = x_pivot + length * math.sin(angle_rad)
     y_end = y_pivot - length * math.cos(angle_rad)
     glBegin(GL_LINES)
@@ -216,21 +241,17 @@ def draw_swing(x_pivot, y_pivot, angle_rad, length, color, platform_width):
 def draw_pivot(x, y):
     glDisable(GL_DEPTH_TEST)
     glColor3f(0, 0, 0)
-    glPointSize(10)  # Larger points for visibility
+    glPointSize(10)
     glBegin(GL_POINTS)
     glVertex2f(x, y)
     glEnd()
     glEnable(GL_DEPTH_TEST)
 
-
 def draw_grid():
-    # Save OpenGL state to prevent leaks
     glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT)
     glPushMatrix()
-    
-    # Draw grid lines
     glDisable(GL_DEPTH_TEST)
-    glColor3f(0.5, 0.5, 0.5)  # Gray color for grid
+    glColor3f(0.5, 0.5, 0.5)
     glLineWidth(1.0)
     glBegin(GL_LINES)
     for x in range(-5, 6, 1):
@@ -240,20 +261,15 @@ def draw_grid():
         glVertex2f(-5, y)
         glVertex2f(5, y)
     glEnd()
-    
-    # Draw coordinate labels
     try:
-        # Cache font to improve performance
         font = pygame.font.SysFont("Arial", 12)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        
-        # X-axis labels
         for x in range(-5, 6, 1):
             if x != 0:
                 text = font.render(str(x), True, (255, 255, 255))
                 text_surface = pygame.image.tostring(text, "RGBA", True)
-                glColor4f(0, 0, 0, 0.8)  # Black background for text
+                glColor4f(0, 0, 0, 0.8)
                 glBegin(GL_QUADS)
                 glVertex2f(x - 0.15, -1.95)
                 glVertex2f(x + 0.15, -1.95)
@@ -262,8 +278,6 @@ def draw_grid():
                 glEnd()
                 glRasterPos2f(x - 0.1, -1.9)
                 glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
-        
-        # Y-axis labels
         for y in range(-2, 6, 1):
             if y != 0:
                 text = font.render(str(y), True, (255, 255, 255))
@@ -277,13 +291,10 @@ def draw_grid():
                 glEnd()
                 glRasterPos2f(-4.9, y - 0.05)
                 glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
-        
         glDisable(GL_BLEND)
     except Exception as e:
         print(f"Error rendering grid labels: {e}")
-        glDisable(GL_BLEND)  # Ensure blending is disabled even on error
-    
-    # Restore OpenGL state
+        glDisable(GL_BLEND)
     glPopMatrix()
     glPopAttrib()
 
@@ -469,11 +480,9 @@ style.configure("TRadiobutton", background="#f0f0f0", font=("Arial", 10))
 main_frame = ttk.Frame(root)
 main_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-# Left panel: Combined Input and Results
 left_frame = ttk.Frame(main_frame, relief="ridge", borderwidth=2)
 left_frame.pack(side="left", fill="y", padx=(0, 10), pady=5)
 
-# Input section
 input_frame = ttk.Frame(left_frame)
 input_frame.pack(fill="x", padx=5, pady=5)
 
@@ -533,7 +542,6 @@ impact_radio2.pack(anchor="w", padx=5)
 simulate_button = ttk.Button(input_frame, text="Lancer la simulation", command=run_simulation)
 simulate_button.pack(pady=10)
 
-# Result section
 result_frame = ttk.Frame(left_frame)
 result_frame.pack(fill="x", padx=5, pady=5)
 result_title = ttk.Label(result_frame, text="Résultats de la simulation", style="Title.TLabel")
@@ -541,7 +549,6 @@ result_title.pack()
 result_text = tk.Text(result_frame, height=20, width=55, font=("Arial", 10))
 result_text.pack(pady=5)
 
-# Right panel: Animation
 animation_frame = ttk.Frame(main_frame, relief="ridge", borderwidth=2)
 animation_frame.pack(side="right", fill="both", expand=True)
 
@@ -562,4 +569,5 @@ initial_photo = ImageTk.PhotoImage(initial_image)
 animation_label.configure(image=initial_photo)
 animation_label.image = initial_photo
 
+pygame.init()
 root.mainloop()
