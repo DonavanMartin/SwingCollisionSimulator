@@ -166,7 +166,7 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
                 color2 = (1, 0, 0)
                 if collision_occurred:
                     is_running.set(False)
-                    root.after(0, lambda: toggle_button.config(text="Start", state="normal"))
+                    root.after(0, lambda: toggle_button.config(text="Démarrer", state="normal"))
         else:
             theta1 = 0
             theta2 = 0
@@ -189,8 +189,8 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
         # Calculate and render speed labels
         speed1_ms = abs(theta1_dot * LENGTH_SWING)  # Speed in m/s for Swing 1
         speed2_ms = abs(theta2_dot * LENGTH_SWING)  # Speed in m/s for Swing 2
-        render_text(f"Speed 1: {speed1_ms:.2f} m/s", pivot1_x - 0.5, pivot1_y+0.8)  # Below angle label
-        render_text(f"Speed 2: {speed2_ms:.2f} m/s", pivot2_x - 0.5, pivot2_y+0.8)  # Below angle label
+        render_text(f"Vitesse 1: {speed1_ms:.2f} m/s", pivot1_x - 0.5, pivot1_y+0.8)  # Below angle label
+        render_text(f"Vitesse 2: {speed2_ms:.2f} m/s", pivot2_x - 0.5, pivot2_y+0.8)  # Below angle label
         
         render_fps(fps)
         

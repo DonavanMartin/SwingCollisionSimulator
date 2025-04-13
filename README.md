@@ -82,26 +82,31 @@
    - **Angle d’impact** : Entrez un angle entre 0° et l’angle max (par exemple, 30°).
    - **Type d’impact** : Choisissez entre `Frontal` ou `Concentré (bord étroit)`.
 
-3. **Lancer la Simulation** :
-   Cliquez sur **"Lancer la simulation"** pour calculer et afficher les résultats (vitesse, force, pression, probabilité de décapitation partielle).
-
-4. **Lancer l’Animation** :
+3. **Lancer l’Animation** :
    Cliquez sur **"Lancer l’animation"** pour ouvrir une fenêtre Pygame avec les balançoires et une fenêtre Tkinter avec un bouton "Démarrer". L’animation est arrêtée par défaut.
    - Cliquez sur "Démarrer" pour lancer l’animation.
    - Cliquez sur "Arrêter" pour la mettre en pause.
    - L’animation s’arrête à l’angle d’impact spécifié.
 
 ## Exemple de Résultats
-
-- **Âge** : 3 ans
-- **Hauteur max** : 0,5 m
-- **Angle** : 30°
-- **Type d’impact** : Concentré
-- **Vitesse** : 4,43 m/s
-- **Force** : 3987 N
-- **Surface d’impact** : 6 cm²
-- **Pression** : 6,65 MPa
-- **Probabilité de décapitation partielle** : _Possible_
+- **Âge de l’enfant** : 3 ans
+- **Hauteur d’oscillation max** : 1.50 m
+- **Masse balançoire 1** : 130.0 lbs (59.0 kg)
+- **Masse balançoire 2** : 130.0 lbs (59.0 kg)
+- **Vitesse initiale balançoire 1** : 0.00 m/s
+- **Vitesse initiale balançoire 2** : 0.00 m/s
+- **Angle max (calculé, par rapport à la verticale)** : 70.5°
+- **Angle d’impact (par rapport à l’horizontal)** : 45.0°
+- **Type d’impact** : concentré
+- **Vitesse d’impact balançoire 1** : 3.85 m/s
+- **Vitesse d’impact balançoire 2** : -3.85 m/s
+- **Vitesse relative d’impact** : 7.70 m/s
+- **Force d’impact** : 4542.57 N
+- **Surface d’impact** : 8.00 cm²
+- **Pression exercée** : 5.68 MPa
+- **Probabilité de décapitation partielle** : Possible (moyen)
+- **Probabilité de fracture** : Possible (moyen)
+- **Probabilité de commotion cérébrale** : Probable (élevé) 1.50 m
 
 ---
 

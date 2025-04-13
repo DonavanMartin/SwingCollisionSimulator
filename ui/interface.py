@@ -5,7 +5,7 @@ import threading
 from PIL import Image, ImageTk
 import pygame
 from simulation.calculations import (
-    calculate_max_angle, run_simulation
+    calculate_max_angle
 )
 from simulation.constants import LBS_TO_KG, LENGTH_SWING, ANTHROPOMETRIC_DATA
 from animation.animation import animate_swings_thread
@@ -97,9 +97,6 @@ class SwingSimulationApp:
         impact_radio2 = ttk.Radiobutton(input_frame, text="Concentré (bord étroit)", variable=self.impact_var, value="concentré")
         impact_radio2.pack(anchor="w", padx=5)
 
-        simulate_button = ttk.Button(input_frame, text="Lancer la simulation", command=self.run_simulation)
-        simulate_button.pack(pady=10)
-
         # Result section
         result_frame = ttk.Frame(left_frame)
         result_frame.pack(fill="x", padx=5, pady=5)
@@ -117,7 +114,7 @@ class SwingSimulationApp:
 
         control_frame = ttk.Frame(animation_frame)
         control_frame.pack(fill="x", pady=5)
-        self.toggle_button = ttk.Button(control_frame, text="Start", command=self.toggle_animation)
+        self.toggle_button = ttk.Button(control_frame, text="Démarrer", command=self.toggle_animation)
         self.toggle_button.pack(side="left", padx=5)
 
         self.animation_surface = pygame.Surface((800, 600))
@@ -151,33 +148,10 @@ class SwingSimulationApp:
         self.result_text.insert(tk.END, f"Probabilité de fracture cervicale : {results['cervical_fracture_risk']}\n")
         self.result_text.insert(tk.END, f"Probabilité de commotion cérébrale : {results['concussion_risk']}\n")
 
-    def run_simulation(self):
-        try:
-            age = int(self.age_var.get())
-            angle_horizontal = float(self.angle_entry.get())
-            mass1_lbs = float(self.mass1_entry.get())
-            mass2_lbs = float(self.mass2_entry.get())
-            v_init1 = float(self.v_init1_entry.get())
-            v_init2 = float(self.v_init2_entry.get())
-            max_height = float(self.height_entry.get())
-            impact_type = self.impact_var.get()
-            
-            results = run_simulation(
-                age, angle_horizontal, mass1_lbs, mass2_lbs, v_init1, v_init2, max_height, impact_type
-            )
-            
-            self.force = results["force"]
-            self.velocity1_global = results["velocity1"]
-            self.velocity2_global = results["velocity2"]
-            self.max_angle = results["max_angle"]
-            self.update_results(results)
-        except ValueError as e:
-            messagebox.showerror("Erreur", str(e))
-
     def toggle_animation(self):
         if self.is_running.get():
             self.is_running.set(False)
-            self.toggle_button.configure(text="Start")
+            self.toggle_button.configure(text="Démarrer")
         else:
             try:
                 age = int(self.age_var.get())
