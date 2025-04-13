@@ -5,7 +5,7 @@ import threading
 from PIL import Image, ImageTk
 import pygame
 from simulation.calculations import (
-    calculate_max_angle, run_simulation, calculate_velocity
+    calculate_max_angle, run_simulation
 )
 from simulation.constants import LBS_TO_KG, LENGTH_SWING, ANTHROPOMETRIC_DATA
 from animation.animation import animate_swings_thread
@@ -129,6 +129,28 @@ class SwingSimulationApp:
         self.animation_label.configure(image=initial_photo)
         self.animation_label.image = initial_photo
 
+    def update_results(self, results):
+        """Met à jour la fenêtre de résultats avec un dictionnaire de résultats."""
+        self.result_text.delete(1.0, tk.END)
+        self.result_text.insert(tk.END, f"Âge de l’enfant : {results['age']} ans\n")
+        self.result_text.insert(tk.END, f"Hauteur d’oscillation max : {results['max_height']:.2f} m\n")
+        self.result_text.insert(tk.END, f"Masse balançoire 1 : {results['mass1_lbs']:.1f} lbs ({results['mass1_kg']:.1f} kg)\n")
+        self.result_text.insert(tk.END, f"Masse balançoire 2 : {results['mass2_lbs']:.1f} lbs ({results['mass2_kg']:.1f} kg)\n")
+        self.result_text.insert(tk.END, f"Vitesse initiale balançoire 1 : {results['v_init1']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Vitesse initiale balançoire 2 : {results['v_init2']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Angle max (calculé, par rapport à la verticale) : {results['max_angle']:.1f}°\n")
+        self.result_text.insert(tk.END, f"Angle d’impact (par rapport à l’horizontal) : {results['angle_horizontal']:.1f}°\n")
+        self.result_text.insert(tk.END, f"Type d’impact : {results['impact_type']}\n")
+        self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 1 : {results['velocity1']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 2 : {results['velocity2']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Vitesse relative d’impact : {results['relative_velocity']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Force d’impact : {results['force']:.2f} N\n")
+        self.result_text.insert(tk.END, f"Surface d’impact : {results['surface_cm2']:.2f} cm²\n")
+        self.result_text.insert(tk.END, f"Pression exercée : {results['pressure_mpa']:.2f} MPa\n")
+        self.result_text.insert(tk.END, f"Probabilité de décapitation partielle : {results['decapitation_risk']}\n")
+        self.result_text.insert(tk.END, f"Probabilité de fracture cervicale : {results['cervical_fracture_risk']}\n")
+        self.result_text.insert(tk.END, f"Probabilité de commotion cérébrale : {results['concussion_risk']}\n")
+
     def run_simulation(self):
         try:
             age = int(self.age_var.get())
@@ -140,35 +162,15 @@ class SwingSimulationApp:
             max_height = float(self.height_entry.get())
             impact_type = self.impact_var.get()
             
-            # Appeler la fonction de simulation
             results = run_simulation(
                 age, angle_horizontal, mass1_lbs, mass2_lbs, v_init1, v_init2, max_height, impact_type
             )
             
-            # Afficher les résultats
             self.force = results["force"]
             self.velocity1_global = results["velocity1"]
             self.velocity2_global = results["velocity2"]
             self.max_angle = results["max_angle"]
-            self.result_text.delete(1.0, tk.END)
-            self.result_text.insert(tk.END, f"Âge de l’enfant : {results['age']} ans\n")
-            self.result_text.insert(tk.END, f"Hauteur d’oscillation max : {results['max_height']:.2f} m\n")
-            self.result_text.insert(tk.END, f"Masse balançoire 1 : {results['mass1_lbs']:.1f} lbs ({results['mass1_kg']:.1f} kg)\n")
-            self.result_text.insert(tk.END, f"Masse balançoire 2 : {results['mass2_lbs']:.1f} lbs ({results['mass2_kg']:.1f} kg)\n")
-            self.result_text.insert(tk.END, f"Vitesse initiale balançoire 1 : {results['v_init1']:.2f} m/s\n")
-            self.result_text.insert(tk.END, f"Vitesse initiale balançoire 2 : {results['v_init2']:.2f} m/s\n")
-            self.result_text.insert(tk.END, f"Angle max (calculé, par rapport à la verticale) : {results['max_angle']:.1f}°\n")
-            self.result_text.insert(tk.END, f"Angle d’impact (par rapport à l’horizontal) : {results['angle_horizontal']:.1f}°\n")
-            self.result_text.insert(tk.END, f"Type d’impact : {results['impact_type']}\n")
-            self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 1 : {results['velocity1']:.2f} m/s\n")
-            self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 2 : {results['velocity2']:.2f} m/s\n")
-            self.result_text.insert(tk.END, f"Vitesse relative d’impact : {results['relative_velocity']:.2f} m/s\n")
-            self.result_text.insert(tk.END, f"Force d’impact : {results['force']:.2f} N\n")
-            self.result_text.insert(tk.END, f"Surface d’impact : {results['surface_cm2']:.2f} cm²\n")
-            self.result_text.insert(tk.END, f"Pression exercée : {results['pressure_mpa']:.2f} MPa\n")
-            self.result_text.insert(tk.END, f"Probabilité de décapitation partielle : {results['decapitation_risk']}\n")
-            self.result_text.insert(tk.END, f"Probabilité de fracture cervicale : {results['cervical_fracture_risk']}\n")
-            self.result_text.insert(tk.END, f"Probabilité de commotion cérébrale : {results['concussion_risk']}\n")
+            self.update_results(results)
         except ValueError as e:
             messagebox.showerror("Erreur", str(e))
 
@@ -210,8 +212,8 @@ class SwingSimulationApp:
                 self.toggle_button.configure(text="Stop")
                 threading.Thread(
                     target=animate_swings_thread,
-                    args=(self.animation_surface, self.animation_label, self.root, self.toggle_button,
-                          self.is_running, self.max_angle, self.target_angle, age, mass1_lbs, mass2_lbs,
+                    args=(self.animation_surface, self.animation_label, self.root, self.toggle_button, self.is_running,
+                          self.update_results, self.max_angle, self.target_angle, age, mass1_lbs, mass2_lbs,
                           v_init1, v_init2, angle_horizontal, max_height, impact_type),
                     daemon=True
                 ).start()

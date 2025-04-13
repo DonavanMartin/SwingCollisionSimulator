@@ -5,6 +5,8 @@ from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+from simulation.constants import PLATFORM_WIDTH
+
 
 def load_texture(image_path):
     try:
@@ -27,7 +29,7 @@ def load_texture(image_path):
         return None
 
 
-def draw_swing(x_pivot, y_pivot, angle_rad, length, color, platform_width):
+def draw_swing(x_pivot, y_pivot, angle_rad, length, color):
     glDisable(GL_DEPTH_TEST)
     glColor3f(*color)
     glLineWidth(5.0)
@@ -37,10 +39,10 @@ def draw_swing(x_pivot, y_pivot, angle_rad, length, color, platform_width):
     glVertex2f(x_pivot, y_pivot)
     glVertex2f(x_end, y_end)
     glEnd()
-    platform_x1 = x_end - platform_width * math.cos(angle_rad)
-    platform_y1 = y_end - platform_width * math.sin(angle_rad)
-    platform_x2 = x_end + platform_width * math.cos(angle_rad)
-    platform_y2 = y_end + platform_width * math.sin(angle_rad)
+    platform_x1 = x_end - PLATFORM_WIDTH * math.cos(angle_rad)
+    platform_y1 = y_end - PLATFORM_WIDTH * math.sin(angle_rad)
+    platform_x2 = x_end + PLATFORM_WIDTH * math.cos(angle_rad)
+    platform_y2 = y_end + PLATFORM_WIDTH * math.sin(angle_rad)
     glBegin(GL_LINES)
     glVertex2f(platform_x1, platform_y1)
     glVertex2f(platform_x2, platform_y2)
@@ -124,8 +126,8 @@ def render_fps(fps):
         pixel_to_gl_y = 7.0 / 600
         gl_text_width = text_width * pixel_to_gl_x
         gl_text_height = text_height * pixel_to_gl_y
-        x_pos = -4.0
-        y_pos = 4.0
+        x_pos = -4.25
+        y_pos = 4.5
         padding_x = 0.1
         padding_y = 0.05
         glColor4f(0, 0, 0, 0.8)

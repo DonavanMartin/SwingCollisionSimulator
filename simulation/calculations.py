@@ -1,7 +1,7 @@
 # simulation/calculations.py
 import math
 from .constants import (
-    G, COLLISION_TIME, LENGTH_SWING, LBS_TO_KG, ANTHROPOMETRIC_DATA
+    G, COLLISION_TIME, LENGTH_SWING, LBS_TO_KG, ANTHROPOMETRIC_DATA, PLATFORM_WIDTH
 )
 from .risk_assessment import (
     assess_decapitation_risk, assess_cervical_fracture_risk, assess_concussion_risk
@@ -32,7 +32,7 @@ def calculate_force(velocity, mass, collision_time=COLLISION_TIME):
     return (mass * velocity) / collision_time
 
 
-def calculate_acceleration(level, head_mass_kg):
+def calculate_acceleration(force, head_mass_kg):
     return force / head_mass_kg
 
 
@@ -52,26 +52,51 @@ def calculate_impact_surface(age, impact_type):
     return surface_mm2 / 100
 
 
-def calculate_pressure(level, surface_cm2):
-    surface_mm2 = surface_cm2 * 100
-    return force / surface_mm2
+def calculate_pressure(force_newton, surface_cm2):
+    """
+    Calcule la pression exercée en mégapascals (MPa).
+
+    Args:
+        force_newton (float): Force en Newtons (N).
+        surface_cm2 (float): Surface d'impact en centimètres carrés (cm²).
+
+    Returns:
+        float: Pression en mégapascals (MPa).
+
+    Raises:
+        ValueError: Si la surface est inférieure ou égale à zéro.
+    """
+    if surface_cm2 <= 0:
+        raise ValueError("La surface d'impact doit être supérieure à zéro.")
+    surface_mm2 = surface_cm2 * 100  # Convertir cm² en mm²
+    return force_newton / surface_mm2  # Pression en N/mm² = MPa
 
 
-def check_platform_collision(theta1, theta2, platform_width, pivot1_x=0, pivot1_y=LENGTH_SWING,
-                             pivot2_x=0, pivot2_y=LENGTH_SWING, length=LENGTH_SWING, scale_factor=1.0):
+def check_platform_collision(theta1, theta2, # The `platform_width` variable in the
+# `check_platform_collision` function is used to
+# determine the width of the platforms attached to the
+# swings. It is a parameter that represents the width of
+# the platforms in the simulation. The function uses this
+# width to check if the platforms of the swings overlap
+# or collide during the swinging motion. By calculating
+# the positions of the platforms based on the swing
+# angles and dimensions, the function determines if there
+# is a collision between the platforms.
+ pivot1_x=0, pivot1_y=LENGTH_SWING,
+                             pivot2_x=0, pivot2_y=LENGTH_SWING, length=LENGTH_SWING):
     """Vérifie si les plateformes des balançoires se chevauchent."""
-    x1 = pivot1_x + (length * scale_factor) * math.sin(theta1)
-    y1 = pivot1_y - (length * scale_factor) * math.cos(theta1)
-    x2 = pivot2_x + (length * scale_factor) * math.sin(theta2)
-    y2 = pivot2_y - (length * scale_factor) * math.cos(theta2)
-    platform1_x1 = x1 - platform_width * math.cos(theta1)
-    platform1_y1 = y1 - platform_width * math.sin(theta1)
-    platform1_x2 = x1 + platform_width * math.cos(theta1)
-    platform1_y2 = y1 + platform_width * math.sin(theta1)
-    platform2_x1 = x2 - platform_width * math.cos(theta2)
-    platform2_y1 = y2 - platform_width * math.sin(theta2)
-    platform2_x2 = x2 + platform_width * math.cos(theta2)
-    platform2_y2 = y2 + platform_width * math.sin(theta2)
+    x1 = pivot1_x + (length ) * math.sin(theta1)
+    y1 = pivot1_y - (length ) * math.cos(theta1)
+    x2 = pivot2_x + (length ) * math.sin(theta2)
+    y2 = pivot2_y - (length ) * math.cos(theta2)
+    platform1_x1 = x1 - PLATFORM_WIDTH * math.cos(theta1)
+    platform1_y1 = y1 - PLATFORM_WIDTH * math.sin(theta1)
+    platform1_x2 = x1 + PLATFORM_WIDTH * math.cos(theta1)
+    platform1_y2 = y1 + PLATFORM_WIDTH * math.sin(theta1)
+    platform2_x1 = x2 - PLATFORM_WIDTH * math.cos(theta2)
+    platform2_y1 = y2 - PLATFORM_WIDTH * math.sin(theta2)
+    platform2_x2 = x2 + PLATFORM_WIDTH * math.cos(theta2)
+    platform2_y2 = y2 + PLATFORM_WIDTH * math.sin(theta2)
     def ccw(Ax, Ay, Bx, By, Cx, Cy):
         return (Cy - Ay) * (Bx - Ax) > (By - Ay) * (Cx - Ax)
     
@@ -88,12 +113,12 @@ def check_platform_collision(theta1, theta2, platform_width, pivot1_x=0, pivot1_
         math.sqrt((platform1_x2 - platform2_x1)**2 + (platform1_y2 - platform2_y1)**2),
         math.sqrt((platform1_x2 - platform2_x2)**2 + (platform1_y2 - platform2_y2)**2)
     )
-    return min_distance < 0.01 * scale_factor
+    return min_distance < 0.01 
 
 
-def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg, target_angle_rad, platform_width,
+def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg, target_angle_rad,
                               pivot1_x=-2.0, pivot1_y=LENGTH_SWING, pivot2_x=2.0, pivot2_y=LENGTH_SWING,
-                              scale_factor=1.0, dt=1.0/60.0):
+                              dt=1.0/60.0):
     """Simule le mouvement pendulaire jusqu'à la collision des plateformes."""
     damping_coeff = 0.02
     theta1 = max_angle_rad
@@ -110,7 +135,7 @@ def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_k
         theta2 += theta2_dot * dt
         t += dt
         if abs(theta1) >= target_angle_rad and check_platform_collision(
-            theta1, theta2, platform_width, pivot1_x, pivot1_y, pivot2_x, pivot2_y, LENGTH_SWING, scale_factor
+            theta1, theta2, pivot1_x, pivot1_y, pivot2_x, pivot2_y, LENGTH_SWING
         ):
             return theta1, theta2, theta1_dot, theta2_dot
         if t > 10:
@@ -150,15 +175,13 @@ def run_simulation(age, angle_horizontal, mass1_lbs, mass2_lbs, v_init1, v_init2
         mass2_kg = mass2_lbs * LBS_TO_KG
         max_angle_rad = math.radians(max_angle)
         target_angle_rad = math.radians(angle)
-        platform_width = 0.6 * (ANTHROPOMETRIC_DATA[age]["neck_height_mm"] / 50.0)
         pivot1_x = -2.0
         pivot2_x = 2.0
         pivot1_y = pivot2_y = LENGTH_SWING
-        scale_factor = 1.0
         
         theta1, theta2, theta1_dot, theta2_dot = calculate_pendulum_motion(
-            max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg, target_angle_rad, platform_width,
-            pivot1_x, pivot1_y, pivot2_x, pivot2_y, scale_factor
+            max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg, target_angle_rad,
+            pivot1_x, pivot1_y, pivot2_x, pivot2_y
         )
         
         velocity1 = theta1_dot * LENGTH_SWING
