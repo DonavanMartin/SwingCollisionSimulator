@@ -148,10 +148,19 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
         draw_swing(pivot2_x, pivot2_y, theta2, LENGTH_SWING * scale_factor, color2, platform_width)
         draw_pivot(pivot1_x, pivot1_y)
         draw_pivot(pivot2_x, pivot2_y)
+        
+        # Render angle labels
         angle1_deg = math.degrees(theta1)
         angle2_deg = math.degrees(theta2)
         render_text(f"Angle 1: {angle1_deg:.1f}°", pivot1_x - 0.5, pivot1_y + 0.3)
         render_text(f"Angle 2: {angle2_deg:.1f}°", pivot2_x - 0.5, pivot2_y + 0.3)
+        
+        # Calculate and render speed labels
+        speed1_ms = abs(theta1_dot * LENGTH_SWING)  # Speed in m/s for Swing 1
+        speed2_ms = abs(theta2_dot * LENGTH_SWING)  # Speed in m/s for Swing 2
+        render_text(f"Speed 1: {speed1_ms:.2f} m/s", pivot1_x - 0.5, pivot1_y)  # Below angle label
+        render_text(f"Speed 2: {speed2_ms:.2f} m/s", pivot2_x - 0.5, pivot2_y)  # Below angle label
+        
         render_fps(fps)
         
         glPopAttrib()
