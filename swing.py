@@ -117,7 +117,6 @@ def run_simulation():
 def load_texture(image_path):
     try:
         image = pygame.image.load(image_path)
-        image = pygame.transform.flip(image, False, True)
         image_data = pygame.image.tostring(image, "RGBA", 1)
         width, height = image.get_size()
         texture_id = glGenTextures(1)
@@ -132,6 +131,7 @@ def load_texture(image_path):
 
 def draw_swing(x_pivot, y_pivot, angle_rad, length, color, platform_width):
     glColor3f(*color)
+    glLineWidth(3.0)
     x_end = x_pivot + length * math.sin(angle_rad)
     y_end = y_pivot - length * math.cos(angle_rad)
     glBegin(GL_LINES)
@@ -154,13 +154,109 @@ def draw_pivot(x, y):
     glVertex2f(x, y)
     glEnd()
 
-def render_fps(fps):
-    font = pygame.font.SysFont("Arial", 24)
-    text = font.render(f"FPS: {fps:.1f}", True, (255, 255, 255))
-    text_surface = pygame.image.tostring(text, "RGBA", True)
-    glRasterPos2f(-4.5, 4.5)
-    glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+def draw_grid():
+    glColor3f(0.5, 0.5, 0.5)  # Gray color for grid lines
+    glLineWidth(1.0)  # Thin lines for the grid
+    glBegin(GL_LINES)
+    # Vertical lines
+    for x in range(-5, 6, 1):  # From x=-5 to x=5, step=1
+        glVertex2f(x, -2)
+        glVertex2f(x, 5)
+    # Horizontal lines
+    for y in range(-2, 6, 1):  # From y=-2 to y=5, step=1
+        glVertex2f(-5, y)
+        glVertex2f(5, y)
+    glEnd()
 
+    # Enable blending for text rendering
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    # Add labels for grid lines
+    try:
+        font = pygame.font.SysFont("Arial", 12)  # Small font for labels
+        # Labels for vertical lines (X-axis)
+        for x in range(-5, 6, 1):
+            if x != 0:  # Skip label at x=0 to avoid overlap
+                text = font.render(str(x), True, (255, 255, 255))  # White text
+                text_surface = pygame.image.tostring(text, "RGBA", True)
+                # Draw background rectangle
+                glColor4f(0, 0, 0, 0.8)  # Black, semi-transparent
+                glBegin(GL_QUADS)
+                glVertex2f(x - 0.15, -1.95)
+                glVertex2f(x + 0.15, -1.95)
+                glVertex2f(x + 0.15, -1.75)
+                glVertex2f(x - 0.15, -1.75)
+                glEnd()
+                # Draw text
+                glRasterPos2f(x - 0.1, -1.9)  # Position just below X-axis
+                glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+        # Labels for horizontal lines (Y-axis)
+        for y in range(-2, 6, 1):
+            if y != 0:  # Skip label at y=0 to avoid overlap
+                text = font.render(str(y), True, (255, 255, 255))  # White text
+                text_surface = pygame.image.tostring(text, "RGBA", True)
+                # Draw background rectangle
+                glColor4f(0, 0, 0, 0.80)  # Black, semi-transparent
+                glBegin(GL_QUADS)
+                glVertex2f(-4.95, y - 0.1)
+                glVertex2f(-4.65, y - 0.1)
+                glVertex2f(-4.65, y + 0.1)
+                glVertex2f(-4.95, y + 0.1)
+                glEnd()
+                # Draw text
+                glRasterPos2f(-4.9, y - 0.05)  # Position just left of Y-axis
+                glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+    except Exception as e:
+        print(f"Error rendering grid labels: {e}")
+
+    # Disable blending to avoid affecting other rendering
+    glDisable(GL_BLEND)
+def render_fps(fps):
+    try:
+        # Enable blending for text rendering
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        font = pygame.font.SysFont("Arial", 24)  # Font for FPS
+        text = font.render(f"FPS: {fps:.1f}", True, (255, 255, 255))  # White text
+        text_surface = pygame.image.tostring(text, "RGBA", True)
+
+        # Calculate text size in OpenGL coordinates
+        text_width = text.get_width()
+        text_height = text.get_height()
+        # Assuming viewport is 800x600 pixels mapped to (-5,5,-2,5)
+        pixel_to_gl_x = 10.0 / 800  # 10 units (-5 to 5) over 800 pixels
+        pixel_to_gl_y = 7.0 / 600   # 7 units (-2 to 5) over 600 pixels
+        gl_text_width = text_width * pixel_to_gl_x
+        gl_text_height = text_height * pixel_to_gl_y
+
+        # Position settings
+        x_pos = -4.0  # Base position (top-left corner of rectangle without padding)
+        y_pos = 4.0
+        padding_x = 0.1  # Padding around text in GL units
+        padding_y = 0.05
+
+        # Draw background rectangle
+        glColor4f(0, 0, 0, 0.8)  # Black, semi-transparent
+        glBegin(GL_QUADS)
+        glVertex2f(x_pos - padding_x, y_pos + padding_y)  # Top-left
+        glVertex2f(x_pos + gl_text_width + padding_x, y_pos + padding_y)  # Top-right
+        glVertex2f(x_pos + gl_text_width + padding_x, y_pos - gl_text_height - padding_y)  # Bottom-right
+        glVertex2f(x_pos - padding_x, y_pos - gl_text_height - padding_y)  # Bottom-left
+        glEnd()
+
+        # Draw text, centered in the rectangle
+        text_x = x_pos  # Shift right by half padding
+        text_y = y_pos - gl_text_height  # Shift down to center vertically
+        glRasterPos2f(text_x, text_y)
+        glDrawPixels(text_width, text_height, GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+
+        # Disable blending to avoid affecting other rendering
+        glDisable(GL_BLEND)
+    except Exception as e:
+        print(f"Error rendering FPS: {e}")
+        
 def animate_swings_thread():
     global animation_running, pygame_window
     pygame.init()
@@ -195,6 +291,7 @@ def animate_swings_thread():
             glTexCoord2f(0, 1); glVertex2f(-5, 5)
             glEnd()
             glDisable(GL_TEXTURE_2D)
+        draw_grid()  # Draw the grid after the background
         current_time = time.time()
         fps_count += 1
         elapsed_time = current_time - last_time
