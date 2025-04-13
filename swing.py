@@ -224,8 +224,13 @@ def draw_pivot(x, y):
 
 
 def draw_grid():
+    # Save OpenGL state to prevent leaks
+    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT)
+    glPushMatrix()
+    
+    # Draw grid lines
     glDisable(GL_DEPTH_TEST)
-    glColor3f(0.5, 0.5, 0.5)
+    glColor3f(0.5, 0.5, 0.5)  # Gray color for grid
     glLineWidth(1.0)
     glBegin(GL_LINES)
     for x in range(-5, 6, 1):
@@ -235,15 +240,20 @@ def draw_grid():
         glVertex2f(-5, y)
         glVertex2f(5, y)
     glEnd()
-    glEnable(GL_DEPTH_TEST)
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    
+    # Draw coordinate labels
     try:
+        # Cache font to improve performance
         font = pygame.font.SysFont("Arial", 12)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        
+        # X-axis labels
         for x in range(-5, 6, 1):
             if x != 0:
                 text = font.render(str(x), True, (255, 255, 255))
                 text_surface = pygame.image.tostring(text, "RGBA", True)
-                glColor4f(0, 0, 0, 0.8)
+                glColor4f(0, 0, 0, 0.8)  # Black background for text
                 glBegin(GL_QUADS)
                 glVertex2f(x - 0.15, -1.95)
                 glVertex2f(x + 0.15, -1.95)
@@ -252,6 +262,8 @@ def draw_grid():
                 glEnd()
                 glRasterPos2f(x - 0.1, -1.9)
                 glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+        
+        # Y-axis labels
         for y in range(-2, 6, 1):
             if y != 0:
                 text = font.render(str(y), True, (255, 255, 255))
@@ -265,10 +277,15 @@ def draw_grid():
                 glEnd()
                 glRasterPos2f(-4.9, y - 0.05)
                 glDrawPixels(text.get_width(), text.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_surface)
+        
+        glDisable(GL_BLEND)
     except Exception as e:
         print(f"Error rendering grid labels: {e}")
-    glDisable(GL_BLEND)
-    glEnable(GL_DEPTH_TEST)
+        glDisable(GL_BLEND)  # Ensure blending is disabled even on error
+    
+    # Restore OpenGL state
+    glPopMatrix()
+    glPopAttrib()
 
 def render_fps(fps):
     glDisable(GL_DEPTH_TEST)
