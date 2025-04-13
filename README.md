@@ -6,98 +6,95 @@
 
 # SwingCollisionSimulator
 
-![Python](https://img.shields.io/badge/python-3.x-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Description
 
-**SwingCollisionSimulator** est une application Python qui simule la collision entre deux balançoires à plateforme, avec une analyse des risques de blessure pour un enfant (modélisé comme un bonhomme allumette). Le projet utilise `tkinter` pour une interface graphique interactive et `matplotlib` pour une animation visuelle des balançoires oscillant face à face. L’utilisateur peut sélectionner l’âge de l’enfant, l’angle d’impact, et le type d’impact (frontal ou concentré) pour calculer la force, la pression exercée sur le cou, et la probabilité d’une décapitation partielle par écrasement. Une image d’arrière-plan personnalisée peut être ajoutée, et un bonhomme allumette de 1 mètre est dessiné sur la balançoire pour représenter l’enfant.
+**SwingCollisionSimulator** est une application Python qui simule la collision entre deux balançoires à plateforme, avec une analyse des risques de blessure pour un enfant (modélisé comme un bonhomme allumette). Le projet utilise `tkinter` pour une interface graphique interactive et `pygame` avec `OpenGL` pour une animation accélérée par GPU des balançoires oscillant face à face. L’utilisateur peut sélectionner l’âge de l’enfant, l’angle d’impact, et le type d’impact (frontal ou concentré) pour calculer la force, la pression exercée sur le cou, et la probabilité d’une décapitation partielle par écrasement. Un bonhomme allumette de 1 mètre est dessiné sur la balançoire pour représenter l’enfant.
 
 ### Caractéristiques principales
 
 - Interface graphique interactive avec `tkinter` pour configurer les paramètres de la simulation.
-- Animation réaliste des balançoires avec `matplotlib`, incluant un bonhomme allumette assis sur une balançoire.
+- Animation GPU réaliste des balançoires avec `pygame` et `OpenGL`, incluant un bonhomme allumette assis sur une balançoire.
 - Calculs physiques détaillés : vitesse, force d’impact, pression, et analyse des risques basée sur des données anthropométriques.
-- Support pour une image d’arrière-plan personnalisée dans la fenêtre d’animation.
-- Visualisation claire des balançoires oscillant face à face, avec une détection de collision à l’angle spécifié.
+- Contrôle de l’animation via un bouton "Démarrer/Arrêter", avec l’animation arrêtée par défaut.
+- Visualisation claire des balançoires oscillant face à face, avec détection de collision à l’angle spécifié.
 
 ## Prérequis
 
-- **Python 3.x** (testé avec Python 3.13)
-- Bibliothèques Python :
-  - `tkinter` (généralement inclus avec Python, mais peut nécessiter une configuration sur macOS/Linux)
-  - `matplotlib` (pour l’animation et la visualisation)
-- Une image d’arrière-plan (par exemple, `background.jpg`) pour la visualisation (optionnel).
+- **Python 3.11 ou ultérieur** : Testé avec Python 3.11.
+- **Bibliothèques Python** (listées dans `requirements.txt`) :
+  - `pygame` : Pour la fenêtre d’animation et le rendu OpenGL.
+  - `PyOpenGL` : Pour les appels OpenGL accélérés par GPU.
+  - `PyOpenGL_accelerate` : Améliore les performances de PyOpenGL (optionnel).
+  - `numpy` : Pour les calculs numériques.
+  - `tkinter` : Généralement inclus avec Python, mais peut nécessiter une installation sur Linux :
+    ```bash
+    sudo apt install python3-tk
+    ```
+- **Dépendances système (Linux)** : Nécessaires pour `pygame` :
+  ```bash
+  sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+  ```
+- **Pilotes GPU** : GPU compatible avec OpenGL 2.1 ou supérieur. Vérifiez avec :
+  ```bash
+  sudo apt install mesa-utils
+  glxinfo | grep "OpenGL version"
+  ```
+
+## Installation et exécution
+
+   ```bash
+   make all
+   ```
 
 ## Installation
 
-1. **Clonez le dépôt** :
+1. **Obtenir le Projet** :
+   Si disponible dans un dépôt, clonez-le :
    ```bash
    git clone https://github.com/votre_nom/SwingCollisionSimulator.git
    cd SwingCollisionSimulator
    ```
+2. **Configurer un Environnement Virtuel** :
+   Pour éviter l’erreur `externally-managed-environment` :
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
 
-### Installez les dépendances :
-
-Assurez-vous que `matplotlib` est installé. Vous pouvez l’installer avec pip :
-
-```bash
-pip install matplotlib
-```
-
-### Configurer `tkinter` (si nécessaire) :
-
-- **Sur Windows** : `tkinter` est généralement inclus avec Python.
-- **Sur macOS** : Vous devrez peut-être installer Tcl/Tk :
-
-```bash
-brew install tcl-tk
-```
-
-Si `tkinter` ne fonctionne pas, réinstallez Python avec le support de Tcl/Tk (voir la section [Dépannage](#dépannage-troubleshooting)).
-
-- **Sur Linux** : Installez `tkinter` avec :
-
-```bash
-sudo apt-get install python3-tk
-```
-
----
-
-## Ajouter une image d’arrière-plan (optionnel) :
-
-Placez une image nommée `background.jpg` (ou modifiez le nom dans le code) dans le répertoire du projet pour l’utiliser comme arrière-plan de l’animation.
-
----
+3. **Installer les Dépendances** :
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Utilisation
 
-### Exécutez le script :
+1. **Exécuter le Script** :
+   ```bash
+   python swing.py
+   ```
 
-```bash
-python swing_collision_simulator.py
-```
+2. **Configurer les Paramètres** :
+   - **Âge de l’enfant** : Sélectionnez l’âge (1 à 5 ans) dans le menu déroulant.
+   - **Hauteur d’oscillation max** : Entrez une valeur en mètres (max 2,25 m, par exemple, 0,5 m).
+   - **Angle d’impact** : Entrez un angle entre 0° et l’angle max (par exemple, 30°).
+   - **Type d’impact** : Choisissez entre `Frontal` ou `Concentré (bord étroit)`.
 
-### Configurer les paramètres :
+3. **Lancer la Simulation** :
+   Cliquez sur **"Lancer la simulation"** pour calculer et afficher les résultats (vitesse, force, pression, probabilité de décapitation partielle).
 
-- **Âge de l’enfant** : Sélectionnez l’âge (1 à 5 ans) dans le menu déroulant.
-- **Angle d’impact** : Entrez un angle entre 0° et 90° (par exemple, 30°).
-- **Type d’impact** : Choisissez entre `Frontal` ou `Concentré (bord étroit)`.
+4. **Lancer l’Animation** :
+   Cliquez sur **"Lancer l’animation"** pour ouvrir une fenêtre Pygame avec les balançoires et une fenêtre Tkinter avec un bouton "Démarrer". L’animation est arrêtée par défaut.
+   - Cliquez sur "Démarrer" pour lancer l’animation.
+   - Cliquez sur "Arrêter" pour la mettre en pause.
+   - L’animation s’arrête à l’angle d’impact spécifié.
 
-### Lancer la simulation :
-
-Cliquez sur **"Lancer la simulation"** pour calculer et afficher les résultats (vitesse, force, pression, probabilité de décapitation partielle).
-
-### Lancer l’animation :
-
-Cliquez sur **"Lancer l’animation"** pour voir les balançoires osciller avec un bonhomme allumette assis sur la balançoire de gauche.  
-L’animation s’arrête lorsque l’angle d’impact est atteint.
-
----
-
-## Exemple de résultats
+## Exemple de Résultats
 
 - **Âge** : 3 ans
+- **Hauteur max** : 0,5 m
 - **Angle** : 30°
 - **Type d’impact** : Concentré
 - **Vitesse** : 4,43 m/s
@@ -119,95 +116,56 @@ L’animation s’arrête lorsque l’angle d’impact est atteint.
 ![Animation](screenshots/animation.png)
 
 ---
+## Structure du Projet
 
-## Structure du projet
+- `swing.py` : Script principal contenant le code de la simulation et de l’animation GPU.
+- `requirements.txt` : Liste des dépendances Python.
 
-- `swing_collision_simulator.py` : Script principal contenant le code de la simulation et de l’animation.
-- `background.jpg` : Image d’arrière-plan (optionnelle, non incluse dans le dépôt).
-- `screenshots/` : Dossier pour les captures d’écran (à créer).
+## Dépannage
 
----
+- **ModuleNotFoundError: No module named 'pygame'** :
+  - Vérifiez que l’environnement virtuel est actif :
+    ```bash
+    source venv/bin/activate
+    ```
+  - Réinstallez les dépendances :
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-## Dépannage (Troubleshooting)
+- **Erreur OpenGL** :
+  - Vérifiez le support GPU :
+    ```bash
+    glxinfo | grep "OpenGL version"
+    ```
+  - Installez les pilotes si nécessaire :
+    ```bash
+    sudo apt install nvidia-driver
+    ```
 
-### Problème avec `tkinter` sur macOS
-
-Si vous obtenez une erreur comme :
-
-```text
-ModuleNotFoundError: No module named '_tkinter'
-```
-
-Suivez ces étapes :
-
-1. Installez Tcl/Tk :
-
-```bash
-brew install tcl-tk
-```
-
-2. Réinstallez Python avec le support de Tcl/Tk :
-
-- Téléchargez Python depuis [python.org](https://www.python.org) et installez-le.
-- Ou réinstallez via Homebrew :
-
-```bash
-brew uninstall python@3.13
-brew install python@3.13
-```
-
-3. Vérifiez que `tkinter` fonctionne :
-
-```bash
-python3 -c "import tkinter"
-```
-
----
-
-### Image d’arrière-plan non trouvée
-
-Assurez-vous que l’image `background.jpg` est dans le répertoire du script.  
-Vous pouvez également modifier le nom ou le chemin de l’image dans le code (dans la fonction `animate_swings`).
-
----
+- **Erreur Tkinter** :
+  - Installez `tkinter` :
+    ```bash
+    sudo apt install python3-tk
+    ```
 
 ## Contribuer
 
-Les contributions sont les bienvenues !  
-Si vous souhaitez ajouter des fonctionnalités (par exemple, un deuxième bonhomme, des paramètres personnalisables pour la taille des balançoires, ou des effets visuels supplémentaires), suivez ces étapes :
-
-1. **Forkez** le dépôt.
-2. Créez une branche pour votre fonctionnalité :
-
-```bash
-git checkout -b ma-nouvelle-fonctionnalite
-```
-
-3. Faites vos modifications et **commitez** :
-
-```bash
-git commit -m "Ajout de ma nouvelle fonctionnalité"
-```
-
-4. **Poussez** votre branche :
-
-```bash
-git push origin ma-nouvelle-fonctionnalite
-```
-
-5. **Ouvrez une pull request** sur GitHub.
-
----
+1. Forkez le dépôt (si disponible).
+2. Créez une branche :
+   ```bash
+   git checkout -b nouvelle-fonctionnalite
+   ```
+3. Commitez vos changements :
+   ```bash
+   git commit -m "Ajout de fonctionnalite"
+   ```
+4. Poussez et ouvrez une pull request.
 
 ## Licence
 
-Ce projet est sous licence MIT.  
-Voir le fichier `LICENSE` pour plus de détails.
-
----
+Ce projet est sous licence **MIT**.
 
 ## Auteurs
 
-- Donavan Martin, Ing., Inspecteur certifié CPSI - Créateur initial – [Votre Profil GitHub](https://github.com/)
-
-```
+- Donavan Martin, Ing., Inspecteur certifié CPSI – Créateur initial – [Votre Profil GitHub](https://github.com/)
