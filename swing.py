@@ -35,7 +35,7 @@ max_angle = 0
 
 def calculate_max_angle(height, length=LENGTH_SWING):
     if height > length:
-        raise ValueError("La hauteur d’oscillation ne peut pas dépasser la longueur de la balançoire.")
+        raise ValueError("La hauteur d’oscillation ne peut pas dépasser la longueur de la v.")
     cos_theta = 1 - height / length
     return math.degrees(math.acos(cos_theta))
 
@@ -305,6 +305,7 @@ def animate_swings_thread():
             angle2 = -angle1
             frame_count += 1
             angle1_rad = math.radians(angle1)
+            angle2_rad = math.radians(angle2)  # Compute angle2_rad
             x1 = pivot1_x + LENGTH_SWING * math.sin(angle1_rad)
             if x1 > pivot1_x and abs(angle1) >= target_angle:
                 animation_running = False
@@ -326,7 +327,7 @@ def animate_swings_thread():
         glDeleteTextures([background_texture])
     pygame.quit()
     pygame_window = None
-
+    
 def animate_swings():
     global animation_running, animation_thread, target_angle, max_angle
     try:
