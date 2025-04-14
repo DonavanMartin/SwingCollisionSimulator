@@ -58,9 +58,10 @@ const App: React.FC = () => {
     impactType: 'frontal',
   });
   const [results, setResults] = useState<CollisionResults | null>(null);
+  const [isCollision, setIsCollision] = useState<boolean>(false);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [resetSignal, setResetSignal] = useState<boolean>(false); // New state for reset
+  const [resetSignal, setResetSignal] = useState<boolean>(false);
 
   const updateParams = (newParams: Partial<SimulationParams>) => {
     setParams((prev) => ({ ...prev, ...newParams }));
@@ -68,8 +69,13 @@ const App: React.FC = () => {
   };
 
   const toggleSimulation = () => {
+    if(isCollision){
+      handleReset()
+      setIsRunning(false)
+      setIsCollision(false)
+    }
     if (isRunning) {
-      setIsRunning(false);
+      setIsRunning(false); // Stop simulation
     } else {
       try {
         const { age, maxHeight, mass1Lbs, mass2Lbs, vInit1, vInit2 } = params;
@@ -88,7 +94,7 @@ const App: React.FC = () => {
         if (isNaN(vInit1) || isNaN(vInit2) || vInit1 < 0 || vInit2 < 0) {
           throw new Error('Les vitesses initiales ne peuvent pas être négatives.');
         }
-        setIsRunning(true);
+        setIsRunning(true); // Start simulation
         setError(null);
       } catch (err) {
         setError((err as Error).message);
@@ -96,18 +102,18 @@ const App: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    setResetSignal(true);
+    setResults(null);
+    setIsRunning(true); // Restart simulation
+  };
+
   const handleCollision = (results: CollisionResults | null) => {
     if (results) {
       setResults(results);
-      setIsRunning(false);
+      setIsRunning(false); // Stop simulation on collision
     }
-  };
-
-  const handleReset = () => {
-    setResetSignal(true); // Trigger reset
-    setTimeout(() => setResetSignal(false), 0); // Reset signal to avoid continuous triggering
-    setResults(null); // Clear results
-    setIsRunning(false); // Ensure simulation is stopped
+    setIsCollision(true)
   };
 
   return (
@@ -181,7 +187,7 @@ const App: React.FC = () => {
                 updateParams={updateParams}
                 toggleSimulation={toggleSimulation}
                 isRunning={isRunning}
-                //onReset={handleReset} // New prop for reset
+                onReset={handleReset}
               />
               <ResultsPanel results={results} />
             </Box>
@@ -227,7 +233,8 @@ const App: React.FC = () => {
                   running={isRunning}
                   onCollision={handleCollision}
                   setIsRunning={setIsRunning}
-                  resetSignal={resetSignal} // Pass resetSignal
+                  resetSignal={resetSignal}
+                  sx={{ width: '100%', height: '100%' }}
                 />
               </Box>
             </Box>

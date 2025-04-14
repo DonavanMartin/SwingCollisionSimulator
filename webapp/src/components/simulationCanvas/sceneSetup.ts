@@ -54,7 +54,7 @@ export const setupScene = () => {
 
   // Swings
   const ropeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
-  const platformGeometry = new THREE.PlaneGeometry(PLATFORM_WIDTH, 0.1);
+  const platformGeometry = new THREE.PlaneGeometry(PLATFORM_WIDTH*2, 0.1);
   const platform1Material = new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.DoubleSide });
   const platform2Material = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
 

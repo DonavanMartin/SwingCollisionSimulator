@@ -7,9 +7,8 @@ import { createTextSprite } from './simulationCanvas/spriteUtils';
 import { calculateMaxAngle } from '../simulation/calculations';
 import { LENGTH_SWING, LBS_TO_KG } from '../simulation/constants';
 
-// Extend props to include resetSignal
 interface ExtendedSimulationCanvasProps extends SimulationCanvasProps {
-  resetSignal?: boolean; // Optional, true when "Redémarrer" is clicked
+  resetSignal?: boolean;
 }
 
 const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
@@ -17,7 +16,7 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
   running,
   onCollision,
   setIsRunning,
-  resetSignal = false, // Default to false
+  resetSignal = false,
 }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -46,8 +45,8 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
   const fpsValueRef = useRef<number>(0);
   const finalV1Ref = useRef<number>(0);
   const finalV2Ref = useRef<number>(0);
+  const hasInitializedRef = useRef<boolean>(false);
 
-  // Reset function to be called only on resetSignal
   const resetSimulation = () => {
     if (ball1Ref.current && ball2Ref.current) {
       ball1Ref.current.theta = 0;
@@ -102,138 +101,51 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
       angle2ValueRef.current = 0;
       speed2ValueRef.current = 0;
       fpsValueRef.current = 0;
-      collisionOccurredRef.current = false; // Reset collision state
+      collisionOccurredRef.current = false;
     }
   };
 
+  // Initial setup (runs once)
   useEffect(() => {
     isMountedRef.current = true;
 
-    // Scene setup
-    const { scene, camera, renderer, ball1, ball2 } = setupScene();
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-    rendererRef.current = renderer;
-    ball1Ref.current = ball1;
-    ball2Ref.current = ball2;
+    try {
+      const { scene, camera, renderer, ball1, ball2 } = setupScene();
+      sceneRef.current = scene;
+      cameraRef.current = camera;
+      rendererRef.current = renderer;
+      ball1Ref.current = ball1;
+      ball2Ref.current = ball2;
 
-    if (mountRef.current && renderer) {
-      mountRef.current.appendChild(renderer.domElement);
-    }
-
-    // Text labels
-    angle1SpriteRef.current = createTextSprite('Angle 1: 0.0°');
-    angle1SpriteRef.current.position.set(-2.5, 2.75, 1);
-    scene.add(angle1SpriteRef.current);
-
-    speed1SpriteRef.current = createTextSprite('Vitesse 1: 0.00 m/s');
-    speed1SpriteRef.current.position.set(-2.5, 3.05, 1);
-    scene.add(speed1SpriteRef.current);
-
-    angle2SpriteRef.current = createTextSprite('Angle 2: 0.0°');
-    angle2SpriteRef.current.position.set(1.5, 2.75, 1);
-    scene.add(angle2SpriteRef.current);
-
-    speed2SpriteRef.current = createTextSprite('Vitesse 2: 0.00 m/s');
-    speed2SpriteRef.current.position.set(1.5, 3.05, 1);
-    scene.add(speed2SpriteRef.current);
-
-    fpsSpriteRef.current = createTextSprite('FPS: 0');
-    fpsSpriteRef.current.position.set(-4.8, -1.8, 1);
-    scene.add(fpsSpriteRef.current);
-
-    // Initialize physics
-    const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
-    if (ball1Ref.current && ball2Ref.current) {
-      ball1Ref.current.theta = -maxAngleRad;
-      ball2Ref.current.theta = maxAngleRad;
-      ball1Ref.current.velocity = params.vInit1 / LENGTH_SWING || 0;
-      ball2Ref.current.velocity = -params.vInit2 / LENGTH_SWING || 0;
-      ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
-      ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
-    }
-
-    // Animation loop
-    const animate = () => {
-      if (!isMountedRef.current || !ball1Ref.current || !ball2Ref.current || !renderer || !scene || !camera) {
-        return;
+      if (mountRef.current && renderer) {
+        mountRef.current.appendChild(renderer.domElement);
       }
 
-      // FPS calculation
-      fpsRef.current.count += 1;
-      const currentTime = Date.now();
-      const elapsedTime = (currentTime - fpsRef.current.lastTime) / 1000;
-      if (elapsedTime >= 1) {
-        fpsRef.current.value = fpsRef.current.count / elapsedTime;
-        fpsRef.current.count = 0;
-        fpsRef.current.lastTime = currentTime;
-      }
+      angle1SpriteRef.current = createTextSprite('Angle 1: 0.0°');
+      angle1SpriteRef.current.position.set(-2.5, 2.75, 1);
+      scene.add(angle1SpriteRef.current);
 
-      if (running) {
-        const { finalV1, finalV2 } = updatePhysicsAndCollision(
-          ball1Ref.current,
-          ball2Ref.current,
-          params,
-          collisionOccurredRef,
-          flashTimeRef,
-          currentTime,
-          onCollision,
-          setIsRunning
-        );
-        finalV1Ref.current = finalV1;
-        finalV2Ref.current = finalV2;
+      speed1SpriteRef.current = createTextSprite('Vitesse 1: 0.00 m/s');
+      speed1SpriteRef.current.position.set(-2.5, 3.05, 1);
+      scene.add(speed1SpriteRef.current);
 
-        // Update labels
-        const angle1Deg = THREE.MathUtils.radToDeg(ball1Ref.current.theta);
-        const angle2Deg = THREE.MathUtils.radToDeg(ball2Ref.current.theta);
-        const speed1Ms = Math.abs(ball1Ref.current.velocity * LENGTH_SWING);
-        const speed2Ms = Math.abs(ball2Ref.current.velocity * LENGTH_SWING);
-        if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
-          angle1SpriteRef.current.material.map?.dispose();
-          angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${angle1Deg.toFixed(1)}°`).material.map;
-          angle1SpriteRef.current.material.map!.needsUpdate = true;
-          angle1ValueRef.current = angle1Deg;
-        }
-        if (speed1SpriteRef.current) {
-          const displaySpeed1 = collisionOccurredRef.current ? finalV1Ref.current : speed1Ms;
-          if (displaySpeed1 !== speed1ValueRef.current) {
-            speed1SpriteRef.current.material.map?.dispose();
-            speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`).material.map;
-            speed1SpriteRef.current.material.map!.needsUpdate = true;
-            speed1ValueRef.current = displaySpeed1;
-          }
-        }
-        if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
-          angle2SpriteRef.current.material.map?.dispose();
-          angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${angle2Deg.toFixed(1)}°`).material.map;
-          angle2SpriteRef.current.material.map!.needsUpdate = true;
-          angle2ValueRef.current = angle2Deg;
-        }
-        if (speed2SpriteRef.current) {
-          const displaySpeed2 = collisionOccurredRef.current ? finalV2Ref.current : speed2Ms;
-          if (displaySpeed2 !== speed2ValueRef.current) {
-            speed2SpriteRef.current.material.map?.dispose();
-            speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`).material.map;
-            speed2SpriteRef.current.material.map!.needsUpdate = true;
-            speed2ValueRef.current = displaySpeed2;
-          }
-        }
-        if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
-          fpsSpriteRef.current.material.map?.dispose();
-          fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
-          fpsSpriteRef.current.material.map!.needsUpdate = true;
-          fpsValueRef.current = fpsRef.current.value;
-        }
-      }
+      angle2SpriteRef.current = createTextSprite('Angle 2: 0.0°');
+      angle2SpriteRef.current.position.set(1.5, 2.75, 1);
+      scene.add(angle2SpriteRef.current);
 
-      renderer.render(scene, camera);
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-    if (isMountedRef.current) {
-      animate();
+      speed2SpriteRef.current = createTextSprite('Vitesse 2: 0.00 m/s');
+      speed2SpriteRef.current.position.set(1.5, 3.05, 1);
+      scene.add(speed2SpriteRef.current);
+
+      fpsSpriteRef.current = createTextSprite('FPS: 0');
+      fpsSpriteRef.current.position.set(-4, 4.5, 1);
+      scene.add(fpsSpriteRef.current);
+
+      hasInitializedRef.current = true;
+    } catch (err) {
+      console.error('Failed to initialize scene:', err);
     }
 
-    // Cleanup
     return () => {
       isMountedRef.current = false;
       if (animationFrameRef.current) {
@@ -258,16 +170,129 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
         rendererRef.current.dispose();
         rendererRef.current = null;
       }
+      sceneRef.current = null;
+      cameraRef.current = null;
     };
-  }, [running, params, onCollision, setIsRunning]);
+  }, []);
 
-  // Handle resetSignal
+  // Update physics params
+  useEffect(() => {
+    if (hasInitializedRef.current && ball1Ref.current && ball2Ref.current) {
+      const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
+      if (!collisionOccurredRef.current && !running) {
+        ball1Ref.current.theta = -maxAngleRad;
+        ball1Ref.current.velocity = params.vInit1 / LENGTH_SWING || 0;
+        ball2Ref.current.theta = maxAngleRad;
+        ball2Ref.current.velocity = -params.vInit2 / LENGTH_SWING || 0;
+      }
+      ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
+      ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
+    }
+  }, [params, running]);
+
+  // Reset simulation
   useEffect(() => {
     if (resetSignal && ball1Ref.current && ball2Ref.current) {
       resetSimulation();
-      setIsRunning(false); // Ensure stopped after reset
+      setIsRunning(true); // Restart simulation
     }
   }, [resetSignal, setIsRunning]);
+
+  // Animation loop
+  useEffect(() => {
+    if (!running || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+      return;
+    }
+
+    const animate = () => {
+      if (
+        !isMountedRef.current ||
+        !ball1Ref.current ||
+        !ball2Ref.current ||
+        !rendererRef.current ||
+        !sceneRef.current ||
+        !cameraRef.current
+      ) {
+        return;
+      }
+
+      fpsRef.current.count += 1;
+      const currentTime = Date.now();
+      const elapsedTime = (currentTime - fpsRef.current.lastTime) / 1000;
+      if (elapsedTime >= 1) {
+        fpsRef.current.value = fpsRef.current.count / elapsedTime;
+        fpsRef.current.count = 0;
+        fpsRef.current.lastTime = currentTime;
+      }
+
+      const { finalV1, finalV2 } = updatePhysicsAndCollision(
+        ball1Ref.current,
+        ball2Ref.current,
+        params,
+        collisionOccurredRef,
+        flashTimeRef,
+        currentTime,
+        onCollision,
+        setIsRunning
+      );
+      finalV1Ref.current = finalV1;
+      finalV2Ref.current = finalV2;
+
+      const angle1Deg = THREE.MathUtils.radToDeg(ball1Ref.current.theta);
+      const angle2Deg = THREE.MathUtils.radToDeg(ball2Ref.current.theta);
+      const speed1Ms = Math.abs(ball1Ref.current.velocity * LENGTH_SWING);
+      const speed2Ms = Math.abs(ball2Ref.current.velocity * LENGTH_SWING);
+      const displaySpeed1 = collisionOccurredRef.current ? finalV1Ref.current : speed1Ms;
+      const displaySpeed2 = collisionOccurredRef.current ? finalV2Ref.current : speed2Ms;
+
+      if(!collisionOccurredRef.current){
+
+      if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
+        angle1SpriteRef.current.material.map?.dispose();
+        angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${angle1Deg.toFixed(1)}°`).material.map;
+        angle1SpriteRef.current.material.map!.needsUpdate = true;
+        angle1ValueRef.current = angle1Deg;
+      }
+
+      if (speed1SpriteRef.current && displaySpeed1 !== speed1ValueRef.current) {
+        speed1SpriteRef.current.material.map?.dispose();
+        speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`).material.map;
+        speed1SpriteRef.current.material.map!.needsUpdate = true;
+        speed1ValueRef.current = displaySpeed1;
+      }
+      if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
+        angle2SpriteRef.current.material.map?.dispose();
+        angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${angle2Deg.toFixed(1)}°`).material.map;
+        angle2SpriteRef.current.material.map!.needsUpdate = true;
+        angle2ValueRef.current = angle2Deg;
+      }
+      if (speed2SpriteRef.current  && displaySpeed2 !== speed2ValueRef.current) {
+        speed2SpriteRef.current.material.map?.dispose();
+        speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`).material.map;
+        speed2SpriteRef.current.material.map!.needsUpdate = true;
+        speed2ValueRef.current = displaySpeed2;
+      }
+      if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
+        fpsSpriteRef.current.material.map?.dispose();
+        fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
+        fpsSpriteRef.current.material.map!.needsUpdate = true;
+        fpsValueRef.current = fpsRef.current.value;
+      }
+    }
+
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [running, params, onCollision, setIsRunning]);
 
   return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />;
 };

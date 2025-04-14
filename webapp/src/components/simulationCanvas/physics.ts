@@ -5,7 +5,7 @@ import {
   calculatePressure,
   calculateImpactSurface,
   calculateAcceleration,
-  checkPlatformCollision
+  checkPlatformCollision,
 } from '../../simulation/calculations';
 import { getRiskLevelDisplayName } from '../../simulation/models';
 import {
@@ -14,7 +14,7 @@ import {
   assessConcussionRisk,
 } from '../../simulation/risk_assessment';
 import { Ball, SimulationParams, CollisionResults } from './types';
-import { G, LENGTH_SWING, ANTHROPOMETRIC_DATA } from '../../simulation/constants';
+import { G, LENGTH_SWING, ANTHROPOMETRIC_DATA, LBS_TO_KG } from '../../simulation/constants';
 
 export const updatePhysicsAndCollision = (
   ball1: Ball,
@@ -39,7 +39,7 @@ export const updatePhysicsAndCollision = (
   ball1.velocity += accel1 * dt;
   ball2.velocity += accel2 * dt;
   ball1.theta += ball1.velocity * dt;
-  ball2.theta += ball2.velocity * dt; // Fixed: Use velocity, not theta
+  ball2.theta += ball2.velocity * dt;
 
   // Update positions
   const x1 = -2.0 + LENGTH_SWING * Math.sin(ball1.theta);
@@ -133,9 +133,6 @@ export const updatePhysicsAndCollision = (
   } else {
     ball1.platformMaterial.color.set(0x0000ff);
     ball2.platformMaterial.color.set(0xff0000);
-    if (collisionOccurredRef.current) {
-      setIsRunning(false);
-    }
   }
 
   return { finalV1, finalV2 };

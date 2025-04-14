@@ -16,9 +16,10 @@ interface InputPanelProps {
   updateParams: (newParams: Partial<SimulationParams>) => void;
   toggleSimulation: () => void;
   isRunning: boolean;
+  onReset: () => void;
 }
 
-const InputPanel: React.FC<InputPanelProps> = ({ params, updateParams, toggleSimulation, isRunning }) => {
+const InputPanel: React.FC<InputPanelProps> = ({ params, updateParams, toggleSimulation, isRunning, onReset }) => {
   const handleNumberChange = (key: keyof SimulationParams, value: string) => {
     const num = parseFloat(value);
     if (!isNaN(num)) {
@@ -96,14 +97,24 @@ const InputPanel: React.FC<InputPanelProps> = ({ params, updateParams, toggleSim
             <FormControlLabel value="concentré" control={<Radio size="small" />} label="Concentré (bord étroit)" />
           </RadioGroup>
         </FormControl>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={toggleSimulation}
-          sx={{ mt: 1 }}
-        >
-          {isRunning ? 'Stop' : 'Démarrer'}
-        </Button>
+        <Box display="flex" gap={1} mt={1}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={toggleSimulation}
+          >
+            {isRunning ? 'Arrêter' : 'Démarrer'}
+          </Button>
+
+          <Button
+            disabled={!isRunning}
+            variant="contained"
+            color="primary"
+            onClick={onReset}
+          >
+            Redémarrer
+          </Button>
+        </Box>
       </Box>
     </Box>
   );
