@@ -20,8 +20,8 @@ from .opengl_utils import load_texture, draw_swing, draw_pivot, draw_grid, rende
 
 
 def animate_swings_thread(surface, animation_label, root, toggle_button, is_running, update_results,
-                         max_angle, target_angle, age, mass1_lbs, mass2_lbs, v_init1, v_init2,
-                         angle_horizontal, max_height, impact_type):
+                         max_angle, age, mass1_lbs, mass2_lbs, v_init1, v_init2,
+                         max_height, impact_type):
     pygame.init()  # Ensure Pygame is initialized
     window_width, window_height = 800, 600
     pygame.display.set_mode((window_width, window_height), DOUBLEBUF | OPENGL | HIDDEN)
@@ -45,7 +45,6 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
     damping_coeff = 0.02
     e = 0.5
     max_angle_rad = math.radians(max_angle)
-    target_angle_rad = math.radians(target_angle)
     theta1 = -max_angle_rad
     theta2 = max_angle_rad
     theta1_dot = v_init1 / LENGTH_SWING if v_init1 else 0
@@ -114,7 +113,7 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
             t += dt
             frame_count += 1
             
-            if abs(theta1) >= target_angle_rad and check_platform_collision(
+            if check_platform_collision(
                 theta1, theta2, pivot1_x, pivot1_y, pivot2_x, pivot2_y,
                 LENGTH_SWING
             ) and not collision_occurred:
@@ -149,8 +148,8 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
                     "mass2_kg": mass2_kg,
                     "v_init1": v_init1,
                     "v_init2": v_init2,
-                    "max_angle": max_angle,
-                    "angle_horizontal": angle_horizontal,
+                    "angle_horizontal_1": math.degrees(theta1),
+                    "angle_horizontal_2": math.degrees(theta2),
                     "impact_type": impact_type,
                     "velocity1": velocity1,
                     "velocity2": velocity2,

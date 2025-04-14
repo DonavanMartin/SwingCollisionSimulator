@@ -17,7 +17,6 @@ class SwingSimulationApp:
         self.root.title("Simulation de collision de balançoires")
         self.root.geometry("1200x800")
         self.is_running = tk.BooleanVar(value=False)
-        self.target_angle = 0
         self.max_angle = 0
         self.force = 0
         self.velocity1_global = 0
@@ -47,13 +46,13 @@ class SwingSimulationApp:
         title_label = ttk.Label(input_frame, text="Paramètres de simulation", style="Title.TLabel")
         title_label.pack(pady=(0, 10))
 
-        age_label = ttk.Label(input_frame, text="Âge de l’enfant (ans) :")
+        age_label = ttk.Label(input_frame, text="Âge de l'enfant (ans) :")
         age_label.pack(anchor="w", padx=5)
         self.age_var = tk.StringVar(value="1")
         age_menu = ttk.Combobox(input_frame, textvariable=self.age_var, values=[1, 2, 3, 4, 5], state="readonly", width=10)
         age_menu.pack(anchor="w", padx=5, pady=2)
 
-        height_label = ttk.Label(input_frame, text="Hauteur d’oscillation max (m) :")
+        height_label = ttk.Label(input_frame, text="Hauteur d'oscillation max (m) :")
         height_label.pack(anchor="w", padx=5)
         self.height_entry = ttk.Entry(input_frame, width=10)
         self.height_entry.pack(anchor="w", padx=5, pady=2)
@@ -83,13 +82,7 @@ class SwingSimulationApp:
         self.v_init2_entry.pack(anchor="w", padx=5, pady=2)
         self.v_init2_entry.insert(0, "0")
 
-        angle_label = ttk.Label(input_frame, text="Angle d’impact (degrés, par rapport à l’horizontal) :")
-        angle_label.pack(anchor="w", padx=5)
-        self.angle_entry = ttk.Entry(input_frame, width=10)
-        self.angle_entry.pack(anchor="w", padx=5, pady=2)
-        self.angle_entry.insert(0, "45")
-
-        impact_label = ttk.Label(input_frame, text="Type d’impact :")
+        impact_label = ttk.Label(input_frame, text="Type d'impact :")
         impact_label.pack(anchor="w", padx=5)
         self.impact_var = tk.StringVar(value="frontal")
         impact_radio1 = ttk.Radiobutton(input_frame, text="Frontal", variable=self.impact_var, value="frontal")
@@ -129,20 +122,20 @@ class SwingSimulationApp:
     def update_results(self, results):
         """Met à jour la fenêtre de résultats avec un dictionnaire de résultats."""
         self.result_text.delete(1.0, tk.END)
-        self.result_text.insert(tk.END, f"Âge de l’enfant : {results['age']} ans\n")
-        self.result_text.insert(tk.END, f"Hauteur d’oscillation max : {results['max_height']:.2f} m\n")
+        self.result_text.insert(tk.END, f"Âge de l'enfant : {results['age']} ans\n")
+        self.result_text.insert(tk.END, f"Hauteur d'oscillation max : {results['max_height']:.2f} m\n")
         self.result_text.insert(tk.END, f"Masse balançoire 1 : {results['mass1_lbs']:.1f} lbs ({results['mass1_kg']:.1f} kg)\n")
         self.result_text.insert(tk.END, f"Masse balançoire 2 : {results['mass2_lbs']:.1f} lbs ({results['mass2_kg']:.1f} kg)\n")
         self.result_text.insert(tk.END, f"Vitesse initiale balançoire 1 : {results['v_init1']:.2f} m/s\n")
         self.result_text.insert(tk.END, f"Vitesse initiale balançoire 2 : {results['v_init2']:.2f} m/s\n")
-        self.result_text.insert(tk.END, f"Angle max (calculé, par rapport à la verticale) : {results['max_angle']:.1f}°\n")
-        self.result_text.insert(tk.END, f"Angle d’impact (par rapport à l’horizontal) : {results['angle_horizontal']:.1f}°\n")
-        self.result_text.insert(tk.END, f"Type d’impact : {results['impact_type']}\n")
-        self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 1 : {results['velocity1']:.2f} m/s\n")
-        self.result_text.insert(tk.END, f"Vitesse d’impact balançoire 2 : {results['velocity2']:.2f} m/s\n")
-        self.result_text.insert(tk.END, f"Vitesse relative d’impact : {results['relative_velocity']:.2f} m/s\n")
-        self.result_text.insert(tk.END, f"Force d’impact : {results['force']:.2f} N\n")
-        self.result_text.insert(tk.END, f"Surface d’impact : {results['surface_cm2']:.2f} cm²\n")
+        self.result_text.insert(tk.END, f"Angle d'impact 1 (par rapport à l'horizontal) : {results['angle_horizontal_1']:.1f}°\n")
+        self.result_text.insert(tk.END, f"Angle d'impact 2 (par rapport à l'horizontal) : {results['angle_horizontal_2']:.1f}°\n")
+        self.result_text.insert(tk.END, f"Type d'impact : {results['impact_type']}\n")
+        self.result_text.insert(tk.END, f"Vitesse d'impact balançoire 1 : {results['velocity1']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Vitesse d'impact balançoire 2 : {results['velocity2']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Vitesse relative d'impact : {results['relative_velocity']:.2f} m/s\n")
+        self.result_text.insert(tk.END, f"Force d'impact : {results['force']:.2f} N\n")
+        self.result_text.insert(tk.END, f"Surface d'impact : {results['surface_cm2']:.2f} cm²\n")
         self.result_text.insert(tk.END, f"Pression exercée : {results['pressure_mpa']:.2f} MPa\n")
         self.result_text.insert(tk.END, f"Probabilité de décapitation partielle : {results['decapitation_risk']}\n")
         self.result_text.insert(tk.END, f"Probabilité de fracture cervicale : {results['cervical_fracture_risk']}\n")
@@ -155,22 +148,17 @@ class SwingSimulationApp:
         else:
             try:
                 age = int(self.age_var.get())
-                angle_horizontal = float(self.angle_entry.get())
                 mass1_lbs = float(self.mass1_entry.get())
                 mass2_lbs = float(self.mass2_entry.get())
                 v_init1 = float(self.v_init1_entry.get())
                 v_init2 = float(self.v_init2_entry.get())
                 max_height = float(self.height_entry.get())
                 impact_type = self.impact_var.get()
-                self.target_angle = 90 - angle_horizontal
-                if self.target_angle < 0:
-                    messagebox.showerror("Erreur", "L’angle par rapport à l’horizontal doit être entre 0 et 90 degrés.")
-                    return
                 if max_height <= 0:
                     messagebox.showerror("Erreur", "La hauteur doit être > 0.")
                     return
                 if max_height > LENGTH_SWING:
-                    messagebox.showerror("Erreur", f"La hauteur d’oscillation ne peut pas dépasser la longueur de la balançoire ({LENGTH_SWING} m).")
+                    messagebox.showerror("Erreur", f"La hauteur d'oscillation ne peut pas dépasser la longueur de la balançoire ({LENGTH_SWING} m).")
                     return
                 if mass1_lbs <= 0 or mass2_lbs <= 0:
                     messagebox.showerror("Erreur", "La masse des balançoires doit être supérieure à 0.")
@@ -179,16 +167,13 @@ class SwingSimulationApp:
                     messagebox.showerror("Erreur", "Les vitesses initiales ne peuvent pas être négatives.")
                     return
                 self.max_angle = calculate_max_angle(max_height)
-                if not 0 <= self.target_angle <= self.max_angle:
-                    messagebox.showerror("Erreur", f"L’angle (par rapport à la verticale) doit être entre 0 et {self.max_angle:.1f}°, soit entre {90-self.max_angle:.1f} et 90° par rapport à l’horizontal.")
-                    return
                 self.is_running.set(True)
                 self.toggle_button.configure(text="Stop")
                 threading.Thread(
                     target=animate_swings_thread,
                     args=(self.animation_surface, self.animation_label, self.root, self.toggle_button, self.is_running,
-                          self.update_results, self.max_angle, self.target_angle, age, mass1_lbs, mass2_lbs,
-                          v_init1, v_init2, angle_horizontal, max_height, impact_type),
+                          self.update_results, self.max_angle, age, mass1_lbs, mass2_lbs,
+                          v_init1, v_init2, max_height, impact_type),
                     daemon=True
                 ).start()
             except ValueError:

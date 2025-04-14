@@ -116,7 +116,7 @@ def check_platform_collision(theta1, theta2, # The `platform_width` variable in 
     return min_distance < 0.01 
 
 
-def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg, target_angle_rad,
+def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_kg,
                               pivot1_x=-2.0, pivot1_y=LENGTH_SWING, pivot2_x=2.0, pivot2_y=LENGTH_SWING,
                               dt=1.0/60.0):
     """Simule le mouvement pendulaire jusqu'à la collision des plateformes."""
@@ -134,7 +134,7 @@ def calculate_pendulum_motion(max_angle_rad, v_init1, v_init2, mass1_kg, mass2_k
         theta1 += theta1_dot * dt
         theta2 += theta2_dot * dt
         t += dt
-        if abs(theta1) >= target_angle_rad and check_platform_collision(
+        if check_platform_collision(
             theta1, theta2, pivot1_x, pivot1_y, pivot2_x, pivot2_y, LENGTH_SWING
         ):
             return theta1, theta2, theta1_dot, theta2_dot
