@@ -18,19 +18,19 @@ export enum RiskLevel {
   const riskLevelData: { [key in RiskLevel]: RiskLevelData } = {
     [RiskLevel.IMPROBABLE]: {
       value: RiskLevel.IMPROBABLE,
-      displayName: 'Improbable (faible)',
+      displayName: 'Improbable',
     },
     [RiskLevel.POSSIBLE]: {
       value: RiskLevel.POSSIBLE,
-      displayName: 'Possible (moyen)',
+      displayName: 'Possible',
     },
     [RiskLevel.PROBABLE]: {
       value: RiskLevel.PROBABLE,
-      displayName: 'Probable (élevé)',
+      displayName: 'Probable',
     },
     [RiskLevel.TRES_PROBABLE]: {
       value: RiskLevel.TRES_PROBABLE,
-      displayName: 'Très probable (extrême)',
+      displayName: 'Très probable',
     },
   };
   

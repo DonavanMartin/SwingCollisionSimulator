@@ -49,46 +49,59 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
 
   const resetSimulation = () => {
     if (ball1Ref.current && ball2Ref.current) {
-      ball1Ref.current.theta = 0;
-      ball1Ref.current.velocity = 0;
-      ball2Ref.current.theta = 0;
-      ball2Ref.current.velocity = 0;
-      finalV1Ref.current = 0;
-      finalV2Ref.current = 0;
-      const x1 = -2.0;
-      const y1 = LENGTH_SWING;
-      const x2 = 2.0;
-      const y2 = LENGTH_SWING;
+      // Calculer l'angle initial basé sur maxHeight
+      const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
+
+      // Réinitialiser les angles et vitesses avec les paramètres initiaux
+      ball1Ref.current.theta = -maxAngleRad; // Balançoire 1 à l'angle initial négatif
+      ball1Ref.current.velocity = params.vInit1 / LENGTH_SWING || 0; // Vitesse initiale
+      ball2Ref.current.theta = maxAngleRad; // Balançoire 2 à l'angle initial positif
+      ball2Ref.current.velocity = -params.vInit2 / LENGTH_SWING || 0; // Vitesse initiale
+      ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
+      ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
+
+      // Calculer les positions des cordes et plateformes
+      const x1 = -LENGTH_SWING * Math.sin(ball1Ref.current.theta);
+      const y1 = LENGTH_SWING * Math.cos(ball1Ref.current.theta);
+      const x2 = LENGTH_SWING * Math.sin(ball2Ref.current.theta);
+      const y2 = LENGTH_SWING * Math.cos(ball2Ref.current.theta);
+
+      // Mettre à jour la géométrie des cordes
       const rope1Pos = ball1Ref.current.rope.geometry.attributes.position.array as Float32Array;
       rope1Pos.set([-2.0, LENGTH_SWING, 0, x1, y1, 0]);
       ball1Ref.current.rope.geometry.attributes.position.needsUpdate = true;
       ball1Ref.current.platform.position.set(x1, y1, 0);
-      ball1Ref.current.platform.rotation.z = 0;
+      ball1Ref.current.platform.rotation.z = ball1Ref.current.theta;
+
       const rope2Pos = ball2Ref.current.rope.geometry.attributes.position.array as Float32Array;
       rope2Pos.set([2.0, LENGTH_SWING, 0, x2, y2, 0]);
       ball2Ref.current.rope.geometry.attributes.position.needsUpdate = true;
       ball2Ref.current.platform.position.set(x2, y2, 0);
-      ball2Ref.current.platform.rotation.z = 0;
+      ball2Ref.current.platform.rotation.z = ball2Ref.current.theta;
+
+      // Réinitialiser les couleurs des plateformes
       ball1Ref.current.platformMaterial.color.set(0x0000ff);
       ball2Ref.current.platformMaterial.color.set(0xff0000);
+
+      // Mettre à jour les sprites avec les valeurs initiales
       if (angle1SpriteRef.current) {
         angle1SpriteRef.current.material.map?.dispose();
-        angle1SpriteRef.current.material.map = createTextSprite('Angle 1: 0.0°').material.map;
+        angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${THREE.MathUtils.radToDeg(ball1Ref.current.theta).toFixed(1)}°`).material.map;
         angle1SpriteRef.current.material.map!.needsUpdate = true;
       }
       if (speed1SpriteRef.current) {
         speed1SpriteRef.current.material.map?.dispose();
-        speed1SpriteRef.current.material.map = createTextSprite('Vitesse 1: 0.00 m/s').material.map;
+        speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${(Math.abs(ball1Ref.current.velocity * LENGTH_SWING)).toFixed(2)} m/s`).material.map;
         speed1SpriteRef.current.material.map!.needsUpdate = true;
       }
       if (angle2SpriteRef.current) {
         angle2SpriteRef.current.material.map?.dispose();
-        angle2SpriteRef.current.material.map = createTextSprite('Angle 2: 0.0°').material.map;
+        angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${THREE.MathUtils.radToDeg(ball2Ref.current.theta).toFixed(1)}°`).material.map;
         angle2SpriteRef.current.material.map!.needsUpdate = true;
       }
       if (speed2SpriteRef.current) {
         speed2SpriteRef.current.material.map?.dispose();
-        speed2SpriteRef.current.material.map = createTextSprite('Vitesse 2: 0.00 m/s').material.map;
+        speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${(Math.abs(ball2Ref.current.velocity * LENGTH_SWING)).toFixed(2)} m/s`).material.map;
         speed2SpriteRef.current.material.map!.needsUpdate = true;
       }
       if (fpsSpriteRef.current) {
@@ -96,11 +109,15 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
         fpsSpriteRef.current.material.map = createTextSprite('FPS: 0').material.map;
         fpsSpriteRef.current.material.map!.needsUpdate = true;
       }
-      angle1ValueRef.current = 0;
-      speed1ValueRef.current = 0;
-      angle2ValueRef.current = 0;
-      speed2ValueRef.current = 0;
+
+      // Réinitialiser les valeurs de suivi
+      angle1ValueRef.current = THREE.MathUtils.radToDeg(ball1Ref.current.theta);
+      speed1ValueRef.current = Math.abs(ball1Ref.current.velocity * LENGTH_SWING);
+      angle2ValueRef.current = THREE.MathUtils.radToDeg(ball2Ref.current.theta);
+      speed2ValueRef.current = Math.abs(ball2Ref.current.velocity * LENGTH_SWING);
       fpsValueRef.current = 0;
+      finalV1Ref.current = 0;
+      finalV2Ref.current = 0;
       collisionOccurredRef.current = false;
     }
   };
@@ -175,28 +192,41 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
     };
   }, []);
 
-  // Update physics params
+  // Update physics params and reset
   useEffect(() => {
     if (hasInitializedRef.current && ball1Ref.current && ball2Ref.current) {
-      const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
-      if (!collisionOccurredRef.current && !running) {
+      if (resetSignal) {
+        resetSimulation();
+      } else if (!collisionOccurredRef.current && !running) {
+        // Appliquer les paramètres initiaux uniquement si la simulation n'est pas en cours
+        const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
         ball1Ref.current.theta = -maxAngleRad;
         ball1Ref.current.velocity = params.vInit1 / LENGTH_SWING || 0;
         ball2Ref.current.theta = maxAngleRad;
         ball2Ref.current.velocity = -params.vInit2 / LENGTH_SWING || 0;
-      }
-      ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
-      ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
-    }
-  }, [params, running]);
+        ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
+        ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
 
-  // Reset simulation
-  useEffect(() => {
-    if (resetSignal && ball1Ref.current && ball2Ref.current) {
-      resetSimulation();
-      setIsRunning(true); // Restart simulation
+        // Mettre à jour les positions des cordes et plateformes
+        const x1 = -LENGTH_SWING * Math.sin(ball1Ref.current.theta);
+        const y1 = LENGTH_SWING * Math.cos(ball1Ref.current.theta);
+        const x2 = LENGTH_SWING * Math.sin(ball2Ref.current.theta);
+        const y2 = LENGTH_SWING * Math.cos(ball2Ref.current.theta);
+
+        const rope1Pos = ball1Ref.current.rope.geometry.attributes.position.array as Float32Array;
+        rope1Pos.set([-2.0, LENGTH_SWING, 0, x1, y1, 0]);
+        ball1Ref.current.rope.geometry.attributes.position.needsUpdate = true;
+        ball1Ref.current.platform.position.set(x1, y1, 0);
+        ball1Ref.current.platform.rotation.z = ball1Ref.current.theta;
+
+        const rope2Pos = ball2Ref.current.rope.geometry.attributes.position.array as Float32Array;
+        rope2Pos.set([2.0, LENGTH_SWING, 0, x2, y2, 0]);
+        ball2Ref.current.rope.geometry.attributes.position.needsUpdate = true;
+        ball2Ref.current.platform.position.set(x2, y2, 0);
+        ball2Ref.current.platform.rotation.z = ball2Ref.current.theta;
+      }
     }
-  }, [resetSignal, setIsRunning]);
+  }, [params, resetSignal, running]);
 
   // Animation loop
   useEffect(() => {
@@ -245,40 +275,38 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
       const displaySpeed1 = collisionOccurredRef.current ? finalV1Ref.current : speed1Ms;
       const displaySpeed2 = collisionOccurredRef.current ? finalV2Ref.current : speed2Ms;
 
-      if(!collisionOccurredRef.current){
-
-      if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
-        angle1SpriteRef.current.material.map?.dispose();
-        angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${angle1Deg.toFixed(1)}°`).material.map;
-        angle1SpriteRef.current.material.map!.needsUpdate = true;
-        angle1ValueRef.current = angle1Deg;
+      if (!collisionOccurredRef.current) {
+        if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
+          angle1SpriteRef.current.material.map?.dispose();
+          angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${angle1Deg.toFixed(1)}°`).material.map;
+          angle1SpriteRef.current.material.map!.needsUpdate = true;
+          angle1ValueRef.current = angle1Deg;
+        }
+        if (speed1SpriteRef.current && displaySpeed1 !== speed1ValueRef.current) {
+          speed1SpriteRef.current.material.map?.dispose();
+          speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`).material.map;
+          speed1SpriteRef.current.material.map!.needsUpdate = true;
+          speed1ValueRef.current = displaySpeed1;
+        }
+        if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
+          angle2SpriteRef.current.material.map?.dispose();
+          angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${angle2Deg.toFixed(1)}°`).material.map;
+          angle2SpriteRef.current.material.map!.needsUpdate = true;
+          angle2ValueRef.current = angle2Deg;
+        }
+        if (speed2SpriteRef.current && displaySpeed2 !== speed2ValueRef.current) {
+          speed2SpriteRef.current.material.map?.dispose();
+          speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`).material.map;
+          speed2SpriteRef.current.material.map!.needsUpdate = true;
+          speed2ValueRef.current = displaySpeed2;
+        }
+        if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
+          fpsSpriteRef.current.material.map?.dispose();
+          fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
+          fpsSpriteRef.current.material.map!.needsUpdate = true;
+          fpsValueRef.current = fpsRef.current.value;
+        }
       }
-
-      if (speed1SpriteRef.current && displaySpeed1 !== speed1ValueRef.current) {
-        speed1SpriteRef.current.material.map?.dispose();
-        speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`).material.map;
-        speed1SpriteRef.current.material.map!.needsUpdate = true;
-        speed1ValueRef.current = displaySpeed1;
-      }
-      if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
-        angle2SpriteRef.current.material.map?.dispose();
-        angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${angle2Deg.toFixed(1)}°`).material.map;
-        angle2SpriteRef.current.material.map!.needsUpdate = true;
-        angle2ValueRef.current = angle2Deg;
-      }
-      if (speed2SpriteRef.current  && displaySpeed2 !== speed2ValueRef.current) {
-        speed2SpriteRef.current.material.map?.dispose();
-        speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`).material.map;
-        speed2SpriteRef.current.material.map!.needsUpdate = true;
-        speed2ValueRef.current = displaySpeed2;
-      }
-      if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
-        fpsSpriteRef.current.material.map?.dispose();
-        fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
-        fpsSpriteRef.current.material.map!.needsUpdate = true;
-        fpsValueRef.current = fpsRef.current.value;
-      }
-    }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
       animationFrameRef.current = requestAnimationFrame(animate);

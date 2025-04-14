@@ -1,3 +1,5 @@
+// src/simulation/physics.ts
+
 import * as THREE from 'three';
 import {
   calculateCollision,
@@ -14,7 +16,17 @@ import {
   assessConcussionRisk,
 } from '../../simulation/risk_assessment';
 import { Ball, SimulationParams, CollisionResults } from './types';
-import { G, LENGTH_SWING, ANTHROPOMETRIC_DATA, LBS_TO_KG } from '../../simulation/constants';
+import {
+  G,
+  LENGTH_SWING,
+  ANTHROPOMETRIC_DATA,
+  LBS_TO_KG,
+  HIC_THRESHOLD,
+  PEAK_ACCELERATION_THRESHOLD,
+  COLLISION_TIME,
+  calculateHIC,
+  CONCUSSION_ACCELERATION_THRESHOLD,
+} from '../../simulation/constants';
 
 export const updatePhysicsAndCollision = (
   ball1: Ball,
@@ -63,26 +75,15 @@ export const updatePhysicsAndCollision = (
   ball2.platform.rotation.z = ball2.theta;
 
   // Collision
-  if (!collisionOccurredRef.current && checkPlatformCollision(
-    ball1.theta,
-    ball2.theta,
-    -2.0,
-    LENGTH_SWING,
-    2.0,
-    LENGTH_SWING,
-    LENGTH_SWING
-  )) {
+  if (
+    !collisionOccurredRef.current &&
+    checkPlatformCollision(ball1.theta, ball2.theta, -2.0, LENGTH_SWING, 2.0, LENGTH_SWING, LENGTH_SWING)
+  ) {
     const v1 = ball1.velocity * LENGTH_SWING;
     const v2 = ball2.velocity * LENGTH_SWING;
     finalV1 = v1;
     finalV2 = v2;
-    const { v1Prime, v2Prime } = calculateCollision(
-      ball1.velocity,
-      ball2.velocity,
-      ball1.mass,
-      ball2.mass,
-      e
-    );
+    const { v1Prime, v2Prime } = calculateCollision(ball1.velocity, ball2.velocity, ball1.mass, ball2.mass, e);
     ball1.velocity = v1Prime / LENGTH_SWING;
     ball2.velocity = v2Prime / LENGTH_SWING;
     collisionOccurredRef.current = true;
@@ -98,6 +99,21 @@ export const updatePhysicsAndCollision = (
     const pressureMPa = calculatePressure(force, surfaceCm2);
     const headMass = ANTHROPOMETRIC_DATA[params.age]?.head_mass_kg || 3.5;
     const accelerationMs2 = calculateAcceleration(force, headMass);
+    // Calculate HIC
+    // Assume a triangular acceleration pulse over COLLISION_TIME
+    const peakAcceleration = accelerationMs2;
+    const accelerationProfile = [
+      { time_s: 0, acceleration_ms2: 0 },
+      { time_s: COLLISION_TIME / 2, acceleration_ms2: peakAcceleration }, // Peak at midpoint
+      { time_s: COLLISION_TIME, acceleration_ms2: 0 }, // Back to 0
+    ];
+    const hic = calculateHIC(accelerationProfile);
+
+    // Evaluate safety
+    const isSafe =
+      hic <= HIC_THRESHOLD &&
+      peakAcceleration <= PEAK_ACCELERATION_THRESHOLD &&
+      accelerationMs2 <= CONCUSSION_ACCELERATION_THRESHOLD;
 
     const results: CollisionResults = {
       age: params.age,
@@ -120,13 +136,17 @@ export const updatePhysicsAndCollision = (
       decapitationRisk: getRiskLevelDisplayName(assessDecapitationRisk(pressureMPa, params.age)),
       cervicalFractureRisk: getRiskLevelDisplayName(assessCervicalFractureRisk(pressureMPa, params.age)),
       concussionRisk: getRiskLevelDisplayName(assessConcussionRisk(accelerationMs2, params.age)),
+      hic, // Added HIC
+      peakAcceleration, // Added peak acceleration
+      accelerationMs2,
+      isSafe, // Added safety flag
     };
 
     onCollision(results);
   }
 
   // Flash effect
-  if (collisionOccurredRef.current && (currentTime - flashTimeRef.current) < 100) {
+  if (collisionOccurredRef.current && currentTime - flashTimeRef.current < 100) {
     const flashColor = params.impactType === 'frontal' ? 0xff0000 : 0xff8000;
     ball1.platformMaterial.color.set(flashColor);
     ball2.platformMaterial.color.set(flashColor);

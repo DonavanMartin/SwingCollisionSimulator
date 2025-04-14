@@ -14,7 +14,7 @@ from animation.animation import animate_swings_thread
 class SwingSimulationApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Simulation de collision de balançoires")
+        self.root.title("Simulation de collisions de balançoires")
         self.root.geometry("1200x800")
         self.is_running = tk.BooleanVar(value=False)
         self.max_angle = 0

@@ -42,6 +42,16 @@ export function calculateForce(
 }
 
 export function calculateAcceleration(force: number, headMassKg: number): number {
+  // Validate inputs
+  if (headMassKg <= 0) {
+    console.warn(`Invalid headMassKg: ${headMassKg}. Must be positive.`);
+    return 0;
+  }
+  if (force < 0) {
+    console.warn(`Negative force: ${force}. Using absolute value for acceleration.`);
+    return Math.abs(force) / headMassKg;
+  }
+  
   return force / headMassKg;
 }
 

@@ -7,10 +7,10 @@ class RiskLevel(Enum):
     Enumération des niveaux de risque pour l'évaluation des dangers dans la simulation.
     Chaque niveau associe une valeur numérique à une description en français.
     """
-    IMPROBABLE = (1, "Improbable (faible)")
-    POSSIBLE = (2, "Possible (moyen)")
-    PROBABLE = (3, "Probable (élevé)")
-    TRES_PROBABLE = (4, "Très probable (extrême)")
+    IMPROBABLE = (1, "Improbable")
+    POSSIBLE = (2, "Possible")
+    PROBABLE = (3, "Probable")
+    TRES_PROBABLE = (4, "Très probable")
 
     def __init__(self, value, display_name):
         self._value_ = value

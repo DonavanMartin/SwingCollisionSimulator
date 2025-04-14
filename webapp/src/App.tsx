@@ -4,7 +4,7 @@ import InputPanel from './components/InputPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SimulationCanvas from './components/SimulationCanvas';
 import { SimulationParams, CollisionResults } from './components/simulationCanvas/types';
-import { LENGTH_SWING } from './simulation/constants';
+import { DEFAULT_AGE, DEFAULT_IMPACTTYPE, DEFAULT_MASS1LBS, DEFAULT_MASS2LBS, DEFAULT_MAXHEIGHT, DEFAULT_VINIT1, DEFAULT_VINIT2, LENGTH_SWING } from './simulation/constants';
 
 const theme = createTheme({
   typography: {
@@ -49,13 +49,13 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 
 const App: React.FC = () => {
   const [params, setParams] = useState<SimulationParams>({
-    age: 1,
-    maxHeight: 1,
-    mass1Lbs: 100,
-    mass2Lbs: 100,
-    vInit1: 0,
-    vInit2: 0,
-    impactType: 'frontal',
+    age: DEFAULT_AGE,
+    maxHeight: DEFAULT_MAXHEIGHT,
+    mass1Lbs: DEFAULT_MASS1LBS,
+    mass2Lbs: DEFAULT_MASS2LBS,
+    vInit1: DEFAULT_VINIT1,
+    vInit2: DEFAULT_VINIT2,
+    impactType: DEFAULT_IMPACTTYPE,
   });
   const [results, setResults] = useState<CollisionResults | null>(null);
   const [isCollision, setIsCollision] = useState<boolean>(false);
@@ -69,14 +69,19 @@ const App: React.FC = () => {
   };
 
   const toggleSimulation = () => {
-    if(isCollision){
-      handleReset()
-      setIsRunning(false)
-      setIsCollision(false)
-    }
-    if (isRunning) {
-      setIsRunning(false); // Stop simulation
+    if (isCollision) {
+      // Cas : Redémarrer après une collision
+      setResetSignal(true);
+      setResults(null);
+      setIsCollision(false);
+      setIsRunning(true);
+      // Réinitialiser resetSignal après usage
+      setTimeout(() => setResetSignal(false), 0);
+    } else if (isRunning) {
+      // Cas : Arrêter la simulation
+      setIsRunning(false);
     } else {
+      // Cas : Démarrer la simulation
       try {
         const { age, maxHeight, mass1Lbs, mass2Lbs, vInit1, vInit2 } = params;
         if (isNaN(age) || ![1, 2, 3, 4, 5].includes(age)) {
@@ -94,7 +99,7 @@ const App: React.FC = () => {
         if (isNaN(vInit1) || isNaN(vInit2) || vInit1 < 0 || vInit2 < 0) {
           throw new Error('Les vitesses initiales ne peuvent pas être négatives.');
         }
-        setIsRunning(true); // Start simulation
+        setIsRunning(true);
         setError(null);
       } catch (err) {
         setError((err as Error).message);
@@ -102,18 +107,12 @@ const App: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    setResetSignal(true);
-    setResults(null);
-    setIsRunning(true); // Restart simulation
-  };
-
   const handleCollision = (results: CollisionResults | null) => {
     if (results) {
       setResults(results);
-      setIsRunning(false); // Stop simulation on collision
+      setIsRunning(false);
+      setIsCollision(true);
     }
-    setIsCollision(true)
   };
 
   return (
@@ -142,7 +141,7 @@ const App: React.FC = () => {
             }}
           >
             <Typography variant="h4" align="center" gutterBottom>
-              Simulation de collision de balançoires
+              Simulation de collisions de balançoires
             </Typography>
           </Grid>
         </Grid>
@@ -187,7 +186,7 @@ const App: React.FC = () => {
                 updateParams={updateParams}
                 toggleSimulation={toggleSimulation}
                 isRunning={isRunning}
-                onReset={handleReset}
+                isCollision={isCollision}
               />
               <ResultsPanel results={results} />
             </Box>

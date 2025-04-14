@@ -41,6 +41,10 @@ export interface CollisionResults {
   decapitationRisk: string;
   cervicalFractureRisk: string;
   concussionRisk: string;
+  hic:number;
+  peakAcceleration:number;
+  accelerationMs2:number;
+  isSafe:boolean;
 }
 
 export interface SimulationCanvasProps {
