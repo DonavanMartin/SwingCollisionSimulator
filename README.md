@@ -46,8 +46,7 @@
 ## Captures d’écran
 
 ### Interface principale
-
-<img src="screenshots/interface.png" alt="Interface principale" width="500">
+![Interface principale](screenshots/interface.png)
 
 ## Structure du Projet
 
