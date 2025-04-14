@@ -53,10 +53,12 @@ import {
   }
   
   export function assessConcussionRisk(accelerationMs2: number, age: number): RiskLevel {
+    console.log(accelerationMs2)
     const accelerationG = accelerationMs2 / 9.81;
-    if (accelerationG < CONCUSSION_ACCELERATION_THRESHOLD * 0.8) {
+    const threshold = age < 14 ? 50 : 80; // 50g pour enfants, 80g pour adultes
+    if (accelerationG < threshold * 0.8) {
       return RiskLevel.IMPROBABLE;
-    } else if (accelerationG < CONCUSSION_ACCELERATION_THRESHOLD) {
+    } else if (accelerationG < threshold) {
       return RiskLevel.POSSIBLE;
     } else {
       return RiskLevel.PROBABLE;

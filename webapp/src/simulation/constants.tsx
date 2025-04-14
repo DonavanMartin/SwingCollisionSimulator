@@ -4,7 +4,9 @@ import { RiskLevel } from './models';
 
 // Physical constants
 export const G: number = 9.81; // Acceleration due to gravity (m/s²)
-export const COLLISION_TIME: number = 0.05; // Collision duration (s)
+export const COLLISION_TIME: number = 0.01; // 10 ms, typique pour collisions rigides // Plage : 5–20 ms (0.005–0.020 s) selon la rigidité.
+// TODO: export const COLLISION_TIME_MIN: number = 0.005; // 5 ms pour impacts rigides
+// TODO:export const COLLISION_TIME_MAX: number = 0.05; // 50 ms pour impacts amortis
 export const LENGTH_SWING: number = 2.25; // Swing length (m)
 export const LBS_TO_KG: number = 0.453592; // Conversion factor (lbs to kg)
 export const FLASH_TIME: number = 1; // Flash time (s)
@@ -65,8 +67,8 @@ export const CONCUSSION_ACCELERATION_THRESHOLD: number = 784; // m/s² (80g ≈ 
 // Default simulation parameters
 export const DEFAULT_AGE: number = 3;
 export const DEFAULT_MAXHEIGHT: number = 1.5;
-export const DEFAULT_MASS1LBS: number = 120;
-export const DEFAULT_MASS2LBS: number = 120;
+export const DEFAULT_MASS1LBS: number = 40;
+export const DEFAULT_MASS2LBS: number = 40;
 export const DEFAULT_VINIT1: number = 0;
 export const DEFAULT_VINIT2: number = 0;
 export const DEFAULT_IMPACTTYPE: 'frontal' | 'concentré' = 'concentré';
