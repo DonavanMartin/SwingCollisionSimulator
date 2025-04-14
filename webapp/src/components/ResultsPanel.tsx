@@ -39,7 +39,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({ results }) => {
           bgcolor: '#f5f5f5',
           p: 2,
           borderRadius: 1,
-          height: 350,
+          height: 500,
           overflowY: 'auto',
           fontFamily: 'Arial, sans-serif',
           fontSize: '0.9rem',

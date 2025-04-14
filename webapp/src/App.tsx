@@ -1,9 +1,9 @@
-import React, { useState, Component, ErrorInfo } from 'react';
-import { Container, Box, Typography, Alert, ThemeProvider, createTheme } from '@mui/material';
+import React, { useState } from 'react';
+import { Container, Box, Typography, Alert, ThemeProvider, createTheme, Grid } from '@mui/material';
 import InputPanel from './components/InputPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SimulationCanvas from './components/SimulationCanvas';
-import { calculateMaxAngle } from './simulation/calculations';
+import { SimulationParams, CollisionResults } from './components/simulationCanvas/types';
 import { LENGTH_SWING } from './simulation/constants';
 
 const theme = createTheme({
@@ -17,58 +17,19 @@ const theme = createTheme({
   },
 });
 
-interface SimulationParams {
-  age: number;
-  maxHeight: number;
-  mass1Lbs: number;
-  mass2Lbs: number;
-  vInit1: number;
-  vInit2: number;
-  impactType: 'frontal' | 'concentré';
-}
-
-interface CollisionResults {
-  age: number;
-  maxHeight: number;
-  mass1Lbs: number;
-  mass1Kg: number;
-  mass2Lbs: number;
-  mass2Kg: number;
-  vInit1: number;
-  vInit2: number;
-  angleHorizontal1: number;
-  angleHorizontal2: number;
-  impactType: string;
-  velocity1: number;
-  velocity2: number;
-  relativeVelocity: number;
-  force: number;
-  surfaceCm2: number;
-  pressureMPa: number;
-  decapitationRisk: string;
-  cervicalFractureRisk: string;
-  concussionRisk: string;
-}
-
 interface ErrorBoundaryState {
   hasError: boolean;
   errorMessage: string | null;
 }
 
-class ErrorBoundary extends Component<{ children: React.ReactNode }, ErrorBoundaryState> {
-  state: ErrorBoundaryState = {
-    hasError: false,
-    errorMessage: null,
-  };
-
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, errorMessage: null };
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, errorMessage: error.message };
   }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
   }
-
   render() {
     if (this.state.hasError) {
       return (
@@ -99,6 +60,7 @@ const App: React.FC = () => {
   const [results, setResults] = useState<CollisionResults | null>(null);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSignal, setResetSignal] = useState<boolean>(false); // New state for reset
 
   const updateParams = (newParams: Partial<SimulationParams>) => {
     setParams((prev) => ({ ...prev, ...newParams }));
@@ -118,7 +80,7 @@ const App: React.FC = () => {
           throw new Error('La hauteur doit être > 0.');
         }
         if (maxHeight > LENGTH_SWING) {
-          throw new Error(`La hauteur d'osc BEFORE d'oscillation ne peut pas dépasser la longueur de la balançoire (${LENGTH_SWING} m).`);
+          throw new Error(`La hauteur d'oscillation ne peut pas dépasser la longueur de la balançoire (${LENGTH_SWING} m).`);
         }
         if (isNaN(mass1Lbs) || isNaN(mass2Lbs) || mass1Lbs <= 0 || mass2Lbs <= 0) {
           throw new Error('La masse des balançoires doit être supérieure à 0.');
@@ -141,48 +103,136 @@ const App: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    setResetSignal(true); // Trigger reset
+    setTimeout(() => setResetSignal(false), 0); // Reset signal to avoid continuous triggering
+    setResults(null); // Clear results
+    setIsRunning(false); // Ensure simulation is stopped
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <ErrorBoundary>
-        <Container sx={{ width: 1200, height: 800, bgcolor: 'background.default', p: 2 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Simulation de collision de balançoires
-          </Typography>
+        {/* Top Menu Row */}
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            px: 2,
+            py: 1,
+            bgcolor: '#f5f5f5',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Grid
+            item
+            xs={12}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h4" align="center" gutterBottom>
+              Simulation de collision de balançoires
+            </Typography>
+          </Grid>
+        </Grid>
+
+        {/* Main Content Row */}
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            height: 'calc(100vh - 120px)',
+            px: 2,
+          }}
+        >
+          {/* Error Alert */}
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
+            <Grid item xs={12}>
+              <Alert severity="error" sx={{ mb: 2, maxWidth: '800px', mx: 'auto' }}>
+                {error}
+              </Alert>
+            </Grid>
           )}
-          <Box display="flex" gap={2} height="calc(100% - 80px)">
+
+          {/* Sidebar */}
+          <Grid
+            item
+            xs={12}
+            sm={5}
+            md={4}
+            sx={{ height: '100%' }}
+          >
             <Box
               sx={{
-                width: 400,
                 border: '2px solid #ccc',
                 p: 2,
                 bgcolor: '#fff',
                 overflowY: 'auto',
+                height: '100%',
               }}
             >
-              <InputPanel params={params} updateParams={updateParams} toggleSimulation={toggleSimulation} isRunning={isRunning} />
+              <InputPanel
+                params={params}
+                updateParams={updateParams}
+                toggleSimulation={toggleSimulation}
+                isRunning={isRunning}
+                //onReset={handleReset} // New prop for reset
+              />
               <ResultsPanel results={results} />
             </Box>
+          </Grid>
+
+          {/* Canvas */}
+          <Grid
+            item
+            xs={12}
+            sm={7}
+            md={8}
+            sx={{ height: '100%' }}
+          >
             <Box
               sx={{
-                flex: 1,
                 border: '2px solid #ccc',
-                p: 1,
+                p: 2,
                 bgcolor: '#fff',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxSizing: 'border-box',
               }}
             >
               <Typography variant="h6" align="center" gutterBottom>
                 Animation des balançoires
               </Typography>
-              <SimulationCanvas params={params} running={isRunning} onCollision={handleCollision} />
+              <Box
+                sx={{
+                  flex: 1,
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <SimulationCanvas
+                  params={params}
+                  running={isRunning}
+                  onCollision={handleCollision}
+                  setIsRunning={setIsRunning}
+                  resetSignal={resetSignal} // Pass resetSignal
+                />
+              </Box>
             </Box>
-          </Box>
-        </Container>
+          </Grid>
+        </Grid>
       </ErrorBoundary>
     </ThemeProvider>
   );

@@ -1,66 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import {
-  calculatePendulumMotion,
-  calculateCollision,
-  calculateVelocity,
-  calculateForce,
-  calculatePressure,
-  calculateImpactSurface,
-  calculateAcceleration,
-  calculateMaxAngle,
-} from '../simulation/calculations';
-import { getRiskLevelDisplayName } from '../simulation/models';
-import { LBS_TO_KG, LENGTH_SWING, ANTHROPOMETRIC_DATA } from '../simulation/constants';
-import { assessDecapitationRisk, assessCervicalFractureRisk, assessConcussionRisk } from '../simulation/risk_assessment';
+import { Ball, SimulationCanvasProps } from './simulationCanvas/types';
+import { setupScene } from './simulationCanvas/sceneSetup';
+import { updatePhysicsAndCollision } from './simulationCanvas/physics';
+import { createTextSprite } from './simulationCanvas/spriteUtils';
+import { calculateMaxAngle } from '../simulation/calculations';
+import { LENGTH_SWING, LBS_TO_KG } from '../simulation/constants';
 
-interface SimulationParams {
-  age: number;
-  maxHeight: number;
-  mass1Lbs: number;
-  mass2Lbs: number;
-  vInit1: number;
-  vInit2: number;
-  impactType: 'frontal' | 'concentré';
+// Extend props to include resetSignal
+interface ExtendedSimulationCanvasProps extends SimulationCanvasProps {
+  resetSignal?: boolean; // Optional, true when "Redémarrer" is clicked
 }
 
-interface Ball {
-  theta: number;
-  mass: number;
-  velocity: number; // Angular velocity (rad/s)
-  mesh: THREE.Mesh;
-}
-
-interface CollisionResults {
-  age: number;
-  maxHeight: number;
-  mass1Lbs: number;
-  mass1Kg: number;
-  mass2Lbs: number;
-  mass2Kg: number;
-  vInit1: number;
-  vInit2: number;
-  angleHorizontal1: number;
-  angleHorizontal2: number;
-  impactType: string;
-  velocity1: number;
-  velocity2: number;
-  relativeVelocity: number;
-  force: number;
-  surfaceCm2: number;
-  pressureMPa: number;
-  decapitationRisk: string;
-  cervicalFractureRisk: string;
-  concussionRisk: string;
-}
-
-interface SimulationCanvasProps {
-  params: SimulationParams;
-  running: boolean;
-  onCollision: (results: CollisionResults) => void;
-}
-
-const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ params, running, onCollision }) => {
+const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
+  params,
+  running,
+  onCollision,
+  setIsRunning,
+  resetSignal = false, // Default to false
+}) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -69,158 +27,206 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ params, running, on
   const ball2Ref = useRef<Ball | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isMountedRef = useRef<boolean>(true);
+  const flashTimeRef = useRef<number>(0);
+  const collisionOccurredRef = useRef<boolean>(false);
+  const fpsRef = useRef<{ count: number; lastTime: number; value: number }>({
+    count: 0,
+    lastTime: Date.now(),
+    value: 0,
+  });
+  const angle1SpriteRef = useRef<THREE.Sprite | null>(null);
+  const speed1SpriteRef = useRef<THREE.Sprite | null>(null);
+  const angle2SpriteRef = useRef<THREE.Sprite | null>(null);
+  const speed2SpriteRef = useRef<THREE.Sprite | null>(null);
+  const fpsSpriteRef = useRef<THREE.Sprite | null>(null);
+  const angle1ValueRef = useRef<number>(0);
+  const speed1ValueRef = useRef<number>(0);
+  const angle2ValueRef = useRef<number>(0);
+  const speed2ValueRef = useRef<number>(0);
+  const fpsValueRef = useRef<number>(0);
+  const finalV1Ref = useRef<number>(0);
+  const finalV2Ref = useRef<number>(0);
+
+  // Reset function to be called only on resetSignal
+  const resetSimulation = () => {
+    if (ball1Ref.current && ball2Ref.current) {
+      ball1Ref.current.theta = 0;
+      ball1Ref.current.velocity = 0;
+      ball2Ref.current.theta = 0;
+      ball2Ref.current.velocity = 0;
+      finalV1Ref.current = 0;
+      finalV2Ref.current = 0;
+      const x1 = -2.0;
+      const y1 = LENGTH_SWING;
+      const x2 = 2.0;
+      const y2 = LENGTH_SWING;
+      const rope1Pos = ball1Ref.current.rope.geometry.attributes.position.array as Float32Array;
+      rope1Pos.set([-2.0, LENGTH_SWING, 0, x1, y1, 0]);
+      ball1Ref.current.rope.geometry.attributes.position.needsUpdate = true;
+      ball1Ref.current.platform.position.set(x1, y1, 0);
+      ball1Ref.current.platform.rotation.z = 0;
+      const rope2Pos = ball2Ref.current.rope.geometry.attributes.position.array as Float32Array;
+      rope2Pos.set([2.0, LENGTH_SWING, 0, x2, y2, 0]);
+      ball2Ref.current.rope.geometry.attributes.position.needsUpdate = true;
+      ball2Ref.current.platform.position.set(x2, y2, 0);
+      ball2Ref.current.platform.rotation.z = 0;
+      ball1Ref.current.platformMaterial.color.set(0x0000ff);
+      ball2Ref.current.platformMaterial.color.set(0xff0000);
+      if (angle1SpriteRef.current) {
+        angle1SpriteRef.current.material.map?.dispose();
+        angle1SpriteRef.current.material.map = createTextSprite('Angle 1: 0.0°').material.map;
+        angle1SpriteRef.current.material.map!.needsUpdate = true;
+      }
+      if (speed1SpriteRef.current) {
+        speed1SpriteRef.current.material.map?.dispose();
+        speed1SpriteRef.current.material.map = createTextSprite('Vitesse 1: 0.00 m/s').material.map;
+        speed1SpriteRef.current.material.map!.needsUpdate = true;
+      }
+      if (angle2SpriteRef.current) {
+        angle2SpriteRef.current.material.map?.dispose();
+        angle2SpriteRef.current.material.map = createTextSprite('Angle 2: 0.0°').material.map;
+        angle2SpriteRef.current.material.map!.needsUpdate = true;
+      }
+      if (speed2SpriteRef.current) {
+        speed2SpriteRef.current.material.map?.dispose();
+        speed2SpriteRef.current.material.map = createTextSprite('Vitesse 2: 0.00 m/s').material.map;
+        speed2SpriteRef.current.material.map!.needsUpdate = true;
+      }
+      if (fpsSpriteRef.current) {
+        fpsSpriteRef.current.material.map?.dispose();
+        fpsSpriteRef.current.material.map = createTextSprite('FPS: 0').material.map;
+        fpsSpriteRef.current.material.map!.needsUpdate = true;
+      }
+      angle1ValueRef.current = 0;
+      speed1ValueRef.current = 0;
+      angle2ValueRef.current = 0;
+      speed2ValueRef.current = 0;
+      fpsValueRef.current = 0;
+      collisionOccurredRef.current = false; // Reset collision state
+    }
+  };
 
   useEffect(() => {
     isMountedRef.current = true;
 
     // Scene setup
-    const scene = new THREE.Scene();
+    const { scene, camera, renderer, ball1, ball2 } = setupScene();
     sceneRef.current = scene;
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load('/background.jpg', (texture) => {
-      if (isMountedRef.current && sceneRef.current) {
-        sceneRef.current.background = texture;
-      }
-    }, undefined, (error) => {
-      console.error('Error loading background texture:', error);
-    });
-
-    // Camera
-    const aspect = 800 / 600;
-    const frustumSize = 600;
-    const camera = new THREE.OrthographicCamera(
-      (-frustumSize * aspect) / 2,
-      (frustumSize * aspect) / 2,
-      frustumSize / 2,
-      -frustumSize / 2,
-      0.1,
-      1000
-    );
-    camera.position.set(0, 0, 100);
-    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
+    rendererRef.current = renderer;
+    ball1Ref.current = ball1;
+    ball2Ref.current = ball2;
 
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(800, 600);
-    if (mountRef.current) {
+    if (mountRef.current && renderer) {
       mountRef.current.appendChild(renderer.domElement);
     }
-    rendererRef.current = renderer;
 
-    // Balls
-    const geometry = new THREE.SphereGeometry(10, 32, 32);
-    const material1 = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-    const mesh1 = new THREE.Mesh(geometry, material1);
-    const mesh2 = new THREE.Mesh(geometry, material2);
+    // Text labels
+    angle1SpriteRef.current = createTextSprite('Angle 1: 0.0°');
+    angle1SpriteRef.current.position.set(-2.5, 2.75, 1);
+    scene.add(angle1SpriteRef.current);
 
-    // Initialize
-    let mass1Kg: number, mass2Kg: number, maxAngleRad: number;
-    try {
-      mass1Kg = params.mass1Lbs * LBS_TO_KG;
-      mass2Kg = params.mass2Lbs * LBS_TO_KG;
-      maxAngleRad = calculateMaxAngle(params.maxHeight);
-    } catch (error) {
-      console.error('Initialization error:', error);
-      return;
+    speed1SpriteRef.current = createTextSprite('Vitesse 1: 0.00 m/s');
+    speed1SpriteRef.current.position.set(-2.5, 3.05, 1);
+    scene.add(speed1SpriteRef.current);
+
+    angle2SpriteRef.current = createTextSprite('Angle 2: 0.0°');
+    angle2SpriteRef.current.position.set(1.5, 2.75, 1);
+    scene.add(angle2SpriteRef.current);
+
+    speed2SpriteRef.current = createTextSprite('Vitesse 2: 0.00 m/s');
+    speed2SpriteRef.current.position.set(1.5, 3.05, 1);
+    scene.add(speed2SpriteRef.current);
+
+    fpsSpriteRef.current = createTextSprite('FPS: 0');
+    fpsSpriteRef.current.position.set(-4.8, -1.8, 1);
+    scene.add(fpsSpriteRef.current);
+
+    // Initialize physics
+    const maxAngleRad = THREE.MathUtils.degToRad(calculateMaxAngle(params.maxHeight));
+    if (ball1Ref.current && ball2Ref.current) {
+      ball1Ref.current.theta = -maxAngleRad;
+      ball2Ref.current.theta = maxAngleRad;
+      ball1Ref.current.velocity = params.vInit1 / LENGTH_SWING || 0;
+      ball2Ref.current.velocity = -params.vInit2 / LENGTH_SWING || 0;
+      ball1Ref.current.mass = params.mass1Lbs * LBS_TO_KG;
+      ball2Ref.current.mass = params.mass2Lbs * LBS_TO_KG;
     }
-
-    const { theta1, theta2, theta1Dot, theta2Dot } = calculatePendulumMotion(
-      maxAngleRad,
-      params.vInit1,
-      params.vInit2,
-      mass1Kg,
-      mass2Kg,
-      -2.0,
-      LENGTH_SWING,
-      2.0,
-      LENGTH_SWING
-    );
-
-    ball1Ref.current = {
-      theta: theta1,
-      mass: mass1Kg,
-      velocity: theta1Dot,
-      mesh: mesh1,
-    };
-    ball2Ref.current = {
-      theta: theta2,
-      mass: mass2Kg,
-      velocity: theta2Dot,
-      mesh: mesh2,
-    };
-
-    scene.add(mesh1);
-    scene.add(mesh2);
 
     // Animation loop
     const animate = () => {
-      if (!isMountedRef.current || !ball1Ref.current || !ball2Ref.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) {
+      if (!isMountedRef.current || !ball1Ref.current || !ball2Ref.current || !renderer || !scene || !camera) {
         return;
       }
 
+      // FPS calculation
+      fpsRef.current.count += 1;
+      const currentTime = Date.now();
+      const elapsedTime = (currentTime - fpsRef.current.lastTime) / 1000;
+      if (elapsedTime >= 1) {
+        fpsRef.current.value = fpsRef.current.count / elapsedTime;
+        fpsRef.current.count = 0;
+        fpsRef.current.lastTime = currentTime;
+      }
+
       if (running) {
-        // Update positions
-        const x1 = -2.0 + LENGTH_SWING * Math.sin(ball1Ref.current.theta) * 100;
-        const y1 = LENGTH_SWING - LENGTH_SWING * Math.cos(ball1Ref.current.theta) * 100;
-        const x2 = 2.0 + LENGTH_SWING * Math.sin(ball2Ref.current.theta) * 100;
-        const y2 = LENGTH_SWING - LENGTH_SWING * Math.cos(ball2Ref.current.theta) * 100;
+        const { finalV1, finalV2 } = updatePhysicsAndCollision(
+          ball1Ref.current,
+          ball2Ref.current,
+          params,
+          collisionOccurredRef,
+          flashTimeRef,
+          currentTime,
+          onCollision,
+          setIsRunning
+        );
+        finalV1Ref.current = finalV1;
+        finalV2Ref.current = finalV2;
 
-        ball1Ref.current.mesh.position.set(x1, -y1, 0);
-        ball2Ref.current.mesh.position.set(x2, -y2, 0);
-
-        // Collision results
-        try {
-          const { v1Prime, v2Prime } = calculateCollision(
-            ball1Ref.current.velocity,
-            ball2Ref.current.velocity,
-            ball1Ref.current.mass,
-            ball2Ref.current.mass
-          );
-
-          const velocity1 = calculateVelocity(ball1Ref.current.theta, LENGTH_SWING, v1Prime * LENGTH_SWING);
-          const velocity2 = calculateVelocity(ball2Ref.current.theta, LENGTH_SWING, v2Prime * LENGTH_SWING);
-          const force = calculateForce(velocity1, ball1Ref.current.mass);
-          const surfaceCm2 = calculateImpactSurface(params.age, params.impactType === 'frontal' ? 'frontal' : 'lateral');
-          const pressureMPa = calculatePressure(force, surfaceCm2);
-          const acceleration = calculateAcceleration(force, ANTHROPOMETRIC_DATA[params.age]?.head_mass_kg || 3.5);
-
-          const results: CollisionResults = {
-            age: params.age,
-            maxHeight: params.maxHeight,
-            mass1Lbs: params.mass1Lbs,
-            mass1Kg,
-            mass2Lbs: params.mass2Lbs,
-            mass2Kg,
-            vInit1: params.vInit1,
-            vInit2: params.vInit2,
-            angleHorizontal1: THREE.MathUtils.radToDeg(ball1Ref.current.theta),
-            angleHorizontal2: THREE.MathUtils.radToDeg(ball2Ref.current.theta),
-            impactType: params.impactType,
-            velocity1,
-            velocity2,
-            relativeVelocity: Math.abs(velocity1 - velocity2),
-            force,
-            surfaceCm2,
-            pressureMPa,
-            decapitationRisk: getRiskLevelDisplayName(assessDecapitationRisk(pressureMPa, params.age)),
-            cervicalFractureRisk: getRiskLevelDisplayName(assessCervicalFractureRisk(pressureMPa, params.age)),
-            concussionRisk: getRiskLevelDisplayName(assessConcussionRisk(acceleration, params.age)),
-          };
-
-          ball1Ref.current.velocity = v1Prime;
-          ball2Ref.current.velocity = v2Prime;
-
-          if (isMountedRef.current) {
-            onCollision(results);
+        // Update labels
+        const angle1Deg = THREE.MathUtils.radToDeg(ball1Ref.current.theta);
+        const angle2Deg = THREE.MathUtils.radToDeg(ball2Ref.current.theta);
+        const speed1Ms = Math.abs(ball1Ref.current.velocity * LENGTH_SWING);
+        const speed2Ms = Math.abs(ball2Ref.current.velocity * LENGTH_SWING);
+        if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
+          angle1SpriteRef.current.material.map?.dispose();
+          angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${angle1Deg.toFixed(1)}°`).material.map;
+          angle1SpriteRef.current.material.map!.needsUpdate = true;
+          angle1ValueRef.current = angle1Deg;
+        }
+        if (speed1SpriteRef.current) {
+          const displaySpeed1 = collisionOccurredRef.current ? finalV1Ref.current : speed1Ms;
+          if (displaySpeed1 !== speed1ValueRef.current) {
+            speed1SpriteRef.current.material.map?.dispose();
+            speed1SpriteRef.current.material.map = createTextSprite(`Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`).material.map;
+            speed1SpriteRef.current.material.map!.needsUpdate = true;
+            speed1ValueRef.current = displaySpeed1;
           }
-        } catch (error) {
-          console.error('Collision calculation error:', error);
+        }
+        if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
+          angle2SpriteRef.current.material.map?.dispose();
+          angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${angle2Deg.toFixed(1)}°`).material.map;
+          angle2SpriteRef.current.material.map!.needsUpdate = true;
+          angle2ValueRef.current = angle2Deg;
+        }
+        if (speed2SpriteRef.current) {
+          const displaySpeed2 = collisionOccurredRef.current ? finalV2Ref.current : speed2Ms;
+          if (displaySpeed2 !== speed2ValueRef.current) {
+            speed2SpriteRef.current.material.map?.dispose();
+            speed2SpriteRef.current.material.map = createTextSprite(`Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`).material.map;
+            speed2SpriteRef.current.material.map!.needsUpdate = true;
+            speed2ValueRef.current = displaySpeed2;
+          }
+        }
+        if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
+          fpsSpriteRef.current.material.map?.dispose();
+          fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
+          fpsSpriteRef.current.material.map!.needsUpdate = true;
+          fpsValueRef.current = fpsRef.current.value;
         }
       }
 
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
+      renderer.render(scene, camera);
       animationFrameRef.current = requestAnimationFrame(animate);
     };
     if (isMountedRef.current) {
@@ -234,6 +240,13 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ params, running, on
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
+      [angle1SpriteRef, speed1SpriteRef, angle2SpriteRef, speed2SpriteRef, fpsSpriteRef].forEach((ref) => {
+        if (ref.current && sceneRef.current) {
+          sceneRef.current.remove(ref.current);
+          ref.current.material.map?.dispose();
+          ref.current.material.dispose();
+        }
+      });
       if (mountRef.current && rendererRef.current) {
         try {
           mountRef.current.removeChild(rendererRef.current.domElement);
@@ -246,9 +259,17 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({ params, running, on
         rendererRef.current = null;
       }
     };
-  }, [running, params, onCollision]);
+  }, [running, params, onCollision, setIsRunning]);
 
-  return <div ref={mountRef} style={{ width: '800px', height: '600px' }} />;
+  // Handle resetSignal
+  useEffect(() => {
+    if (resetSignal && ball1Ref.current && ball2Ref.current) {
+      resetSimulation();
+      setIsRunning(false); // Ensure stopped after reset
+    }
+  }, [resetSignal, setIsRunning]);
+
+  return <div ref={mountRef} style={{ width: '100%', height: '100%' }} />;
 };
 
 export default SimulationCanvas;
