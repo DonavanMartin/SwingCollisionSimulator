@@ -55,6 +55,9 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
     t = 0
     dt = 1.0 / 60.0
     
+    final_v1 = 0
+    final_v2 = 0
+    
     while is_running.get():
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
@@ -117,6 +120,8 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
             ) and not collision_occurred:
                 v1 = theta1_dot * LENGTH_SWING
                 v2 = theta2_dot * LENGTH_SWING
+                final_v1 = v1
+                final_v2 = v2
                 v1_prime, v2_prime = calculate_collision(theta1_dot, theta2_dot, mass1_kg, mass2_kg, e)
                 theta1_dot = v1_prime / LENGTH_SWING
                 theta2_dot = v2_prime / LENGTH_SWING
@@ -187,10 +192,18 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
         render_text(f"Angle 2: {angle2_deg:.1f}°", pivot2_x - 0.5, pivot2_y + 0.5)
         
         # Calculate and render speed labels
-        speed1_ms = abs(theta1_dot * LENGTH_SWING)  # Speed in m/s for Swing 1
-        speed2_ms = abs(theta2_dot * LENGTH_SWING)  # Speed in m/s for Swing 2
-        render_text(f"Vitesse 1: {speed1_ms:.2f} m/s", pivot1_x - 0.5, pivot1_y+0.8)  # Below angle label
-        render_text(f"Vitesse 2: {speed2_ms:.2f} m/s", pivot2_x - 0.5, pivot2_y+0.8)  # Below angle label
+        
+        if collision_occurred:
+            speed1_ms = abs(theta1_dot * LENGTH_SWING)  # Speed in m/s for Swing 1
+            speed2_ms = abs(theta2_dot * LENGTH_SWING)  # Speed in m/s for Swing 2
+            render_text(f"Vitesse 1: {final_v1:.2f} m/s", pivot1_x - 0.5, pivot1_y+0.8)  # Below angle label
+            render_text(f"Vitesse 2: {final_v2:.2f} m/s", pivot2_x - 0.5, pivot2_y+0.8)  # Below angle label
+        else:
+            speed1_ms = abs(theta1_dot * LENGTH_SWING)  # Speed in m/s for Swing 1
+            speed2_ms = abs(theta2_dot * LENGTH_SWING)  # Speed in m/s for Swing 2
+            render_text(f"Vitesse 1: {speed1_ms:.2f} m/s", pivot1_x - 0.5, pivot1_y+0.8)  # Below angle label
+            render_text(f"Vitesse 2: {speed2_ms:.2f} m/s", pivot2_x - 0.5, pivot2_y+0.8)  # Below angle label
+            
         
         render_fps(fps)
         
