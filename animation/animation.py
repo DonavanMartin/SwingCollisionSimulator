@@ -29,7 +29,7 @@ def animate_swings_thread(surface, animation_label, root, toggle_button, is_runn
     glClearColor(0.0, 1.0, 0.0, 1.0)
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LEQUAL)
-    background_texture = load_texture("background.jpg")
+    background_texture = load_texture("animation/background.jpg")
     if background_texture is None:
         print("Failed to load background texture; rendering with fallback color.")
     clock = pygame.time.Clock()
