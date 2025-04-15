@@ -1,10 +1,11 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { Container, Box, Typography, Alert, ThemeProvider, createTheme, Grid } from '@mui/material';
+import { Container, Box, Typography, Alert, ThemeProvider, createTheme, Grid, Link } from '@mui/material';
 import InputPanel from './components/InputPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SimulationCanvas from './components/SimulationCanvas';
 import { SimulationParams, CollisionResults } from './components/simulationCanvas/types';
-import { DEFAULT_AGE, DEFAULT_IMPACTTYPE, DEFAULT_MASS1LBS, DEFAULT_MASS2LBS, DEFAULT_MAXHEIGHT, DEFAULT_VINIT1, DEFAULT_VINIT2, LENGTH_SWING } from './simulation/constants';
+import { DEFAULT_AGE, DEFAULT_IMPACTTYPE, DEFAULT_MASS1LBS, DEFAULT_MASS2LBS, DEFAULT_MAXHEIGHT, DEFAULT_VINIT1, DEFAULT_VINIT2, LENGTH_SWING, VERSION_NUMBER_MAJOR, VERSION_NUMBER_MINOR, VERSION_NUMBER_PATCH } from './simulation/constants';
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 const theme = createTheme({
   typography: {
@@ -143,19 +144,42 @@ const App: React.FC = () => {
       <ErrorBoundary>
         {/* Top Menu Row */}
         <Grid container spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
-          <Grid size={12}>
+          <Grid size={12} sx={{ position: 'relative', textAlign: 'center' }}>
             <Typography
               variant="h4"
-              align="center"
-              gutterBottom
               sx={{
                 fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
               }}
             >
               Simulation de collisions de balançoires
             </Typography>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 'bold', lineHeight: 1 }}>
+                {'v' + VERSION_NUMBER_MAJOR +'.' +VERSION_NUMBER_MINOR + '.' +VERSION_NUMBER_PATCH }
+              </Typography>
+              <Typography variant="body2" sx={{ lineHeight: 1 }}>
+              <Link
+                href="https://github.com/DonavanMartin/SwingCollisionSimulator"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ textDecoration: 'none', color: 'primary.main', display: 'flex', alignItems: 'center' }}
+              >
+                <GitHubIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
+                GitHub
+              </Link>
+              </Typography>
+            </Box>
           </Grid>
-
+        
           <Grid size={12}>
             {/* Error Alert */}
             {error && (
@@ -171,7 +195,7 @@ const App: React.FC = () => {
               </Alert>
             )}
           </Grid>
-
+        
           {/* Main Content Row */}
           <Grid size={{ xs: 12, sm: 4 }}>
             <Box

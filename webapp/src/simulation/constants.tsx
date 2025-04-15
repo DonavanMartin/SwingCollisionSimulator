@@ -2,6 +2,11 @@
 
 import { RiskLevel } from './models';
 
+// version
+export const VERSION_NUMBER_MAJOR = 1
+export const VERSION_NUMBER_MINOR = 0
+export const VERSION_NUMBER_PATCH = 0
+
 // Physical constants
 export const G: number = 9.81; // Acceleration due to gravity (m/s²)
 export const COLLISION_TIME: number = 0.01; // 10 ms, typique pour collisions rigides // Plage : 5–20 ms (0.005–0.020 s) selon la rigidité.
