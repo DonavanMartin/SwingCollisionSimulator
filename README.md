@@ -1,4 +1,5 @@
 # SwingCollisionSimulator
+[Essayez le simulateur en ligne](https://www.swingsimulator.ca) 
 
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
