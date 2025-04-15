@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { Container, Box, Typography, Alert, ThemeProvider, createTheme, Grid } from '@mui/material';
 import InputPanel from './components/InputPanel';
 import ResultsPanel from './components/ResultsPanel';
@@ -63,6 +63,29 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [resetSignal, setResetSignal] = useState<boolean>(false);
 
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const scrollToCanvas = useCallback(() => {
+    if (canvasRef.current) {
+      // Try scrollIntoView first
+      canvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Fallback: Force scroll after a short delay
+      setTimeout(() => {
+        if (canvasRef.current) {
+          const rect = canvasRef.current.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const targetY = rect.top + scrollTop - 20; // Small offset for padding
+          window.scrollTo({ top: targetY, behavior: 'smooth' });
+          console.log('Scrolled to:', targetY, 'Rect:', rect.top);
+        } else {
+          console.warn('canvasRef.current is null during fallback');
+        }
+      }, 100);
+    } else {
+      console.warn('canvasRef.current is null');
+    }
+  }, []);
+
   const updateParams = (newParams: Partial<SimulationParams>) => {
     setParams((prev) => ({ ...prev, ...newParams }));
     setError(null);
@@ -70,19 +93,17 @@ const App: React.FC = () => {
 
   const toggleSimulation = () => {
     if (isCollision) {
-      // Cas : Redémarrer après une collision
+      // Restart after collision
       setResetSignal(true);
       setResults(null);
       setIsCollision(false);
       setIsRunning(true);
-      // Réinitialiser resetSignal après usage
       setTimeout(() => setResetSignal(false), 0);
     } else if (isRunning) {
-      // Cas : Arrêter la simulation
+      // Stop simulation
       setIsRunning(false);
     } else {
-      scrollToCanvas()
-      // Cas : Démarrer la simulation
+      // Start simulation
       try {
         const { age, maxHeight, mass1Lbs, mass2Lbs, vInit1, vInit2 } = params;
         if (isNaN(age) || ![1, 2, 3, 4, 5].includes(age)) {
@@ -102,6 +123,7 @@ const App: React.FC = () => {
         }
         setIsRunning(true);
         setError(null);
+        scrollToCanvas(); // Moved after state update
       } catch (err) {
         setError((err as Error).message);
       }
@@ -115,120 +137,112 @@ const App: React.FC = () => {
       setIsCollision(true);
     }
   };
-  const canvasRef = useRef<HTMLDivElement>(null);
-
-  // Handler to scroll to canvas
-  const scrollToCanvas = () => {
-    if (canvasRef.current) {
-      canvasRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
 
   return (
-<ThemeProvider theme={theme}>
-  <ErrorBoundary>
-    {/* Top Menu Row */}
-    <Grid container spacing={2}>
-      <Grid size={12}>
-        <Typography
-          variant="h4"
-          align="center"
-          gutterBottom
-          sx={{
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-          }}
-        >
-          Simulation de collisions de balançoires
-        </Typography>
-      </Grid>
-
-      <Grid size={12}>
-        {/* Error Alert */}
-        {error && (
-          <Alert
-            severity="error"
-            sx={{
-              mb: 2,
-              maxWidth: { xs: '100%', sm: '800px' },
-              mx: 'auto',
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-      </Grid>
-
-      {/* Main Content Row */}
-      <Grid size={{ xs: 12, sm: 4 }}>
-        <Box
-          sx={{
-            border: '2px solid #ccc',
-            p: { xs: 1, sm: 2 },
-            bgcolor: '#fff',
-            boxSizing: 'border-box',
-            height: { xs: 'auto', sm: '100%' }, // Auto height on mobile
-            overflowY: { xs: 'visible', sm: 'auto' }, // No scroll on mobile
-          }}
-        >
-          <InputPanel
-            params={params}
-            updateParams={updateParams}
-            toggleSimulation={toggleSimulation}
-            isRunning={isRunning}
-            isCollision={isCollision}
-          />
-          <ResultsPanel results={results} />
-        </Box>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 8 }}>
-        <Box
-          ref={canvasRef} // Ref on Box
-          sx={{
-            border: '2px solid #ccc',
-            p: { xs: 1, sm: 2 },
-            bgcolor: '#fff',
-            boxSizing: 'border-box',
-            height: { xs: '400px', sm: '100%' }, // Fixed height on mobile
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Typography
-            variant="h6"
-            align="center"
-            gutterBottom
-            sx={{
-              fontSize: { xs: '1rem', sm: '1.25rem' },
-            }}
-          >
-            Animation des balançoires
-          </Typography>
-          <Box
-            sx={{
-              flex: 1,
-              width: '100%',
-              overflow: 'hidden',
-            }}
-          >
-            <SimulationCanvas
-              params={params}
-              running={isRunning}
-              onCollision={handleCollision}
-              setIsRunning={setIsRunning}
-              resetSignal={resetSignal}
+    <ThemeProvider theme={theme}>
+      <ErrorBoundary>
+        {/* Top Menu Row */}
+        <Grid container spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
+          <Grid size={12}>
+            <Typography
+              variant="h4"
+              align="center"
+              gutterBottom
               sx={{
-                width: '100%',
-                height: '100%',
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
               }}
-            />
-          </Box>
-        </Box>
-      </Grid>
-    </Grid>
-  </ErrorBoundary>
-</ThemeProvider> 
+            >
+              Simulation de collisions de balançoires
+            </Typography>
+          </Grid>
+
+          <Grid size={12}>
+            {/* Error Alert */}
+            {error && (
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                  maxWidth: { xs: '100%', sm: '800px' },
+                  mx: 'auto',
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+          </Grid>
+
+          {/* Main Content Row */}
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <Box
+              sx={{
+                border: '2px solid #ccc',
+                p: { xs: 1, sm: 2 },
+                bgcolor: '#fff',
+                boxSizing: 'border-box',
+                height: { xs: 'auto', sm: '100%' },
+                overflowY: { xs: 'visible', sm: 'auto' },
+              }}
+            >
+              <InputPanel
+                params={params}
+                updateParams={updateParams}
+                toggleSimulation={toggleSimulation}
+                isRunning={isRunning}
+                isCollision={isCollision}
+              />
+              <ResultsPanel results={results} />
+            </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 8 }}>
+            <Box
+              ref={canvasRef}
+              sx={{
+                border: '2px solid #ccc',
+                p: { xs: 1, sm: 2 },
+                bgcolor: '#fff',
+                boxSizing: 'border-box',
+                height: { xs: '400px', sm: '100%' },
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Typography
+                variant="h6"
+                align="center"
+                gutterBottom
+                sx={{
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                }}
+              >
+                Animation des balançoires
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  width: '100%',
+                  overflow: 'hidden',
+                }}
+              >
+                <SimulationCanvas
+                  params={params}
+                  running={isRunning}
+                  onCollision={handleCollision}
+                  setIsRunning={setIsRunning}
+                  resetSignal={resetSignal}
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                  }}
+                />
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 };
 

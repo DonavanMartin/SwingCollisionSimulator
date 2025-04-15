@@ -7,8 +7,8 @@ export const setupScene = () => {
   const scene = new THREE.Scene();
 
   // Camera
-  const windowWidth = 1200;
-  const windowHeight = 900;
+  const windowWidth = 600;
+  const windowHeight = 450;
   const left = -5;
   const right = 5;
   const bottom = -2;
@@ -19,6 +19,7 @@ export const setupScene = () => {
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 3)); // Cap DPR for performance
   renderer.setSize(windowWidth, windowHeight);
 
   // Background
