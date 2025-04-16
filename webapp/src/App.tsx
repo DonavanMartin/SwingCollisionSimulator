@@ -154,30 +154,31 @@ const App: React.FC = () => {
               Simulation de collisions de balançoires
             </Typography>
             <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-              }}
-            >
-              <Typography variant="body2" sx={{ fontWeight: 'bold', lineHeight: 1 }}>
-                {'v' + VERSION_NUMBER_MAJOR +'.' +VERSION_NUMBER_MINOR + '.' +VERSION_NUMBER_PATCH }
-              </Typography>
-              <Typography variant="body2" sx={{ lineHeight: 1 }}>
-              <Link
-                href="https://github.com/DonavanMartin/SwingCollisionSimulator"
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ textDecoration: 'none', color: 'primary.main', display: 'flex', alignItems: 'center' }}
-              >
-                <GitHubIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
-                GitHub
-              </Link>
-              </Typography>
-            </Box>
+      sx={{
+        position: 'fixed',
+        bottom: 16, // Adjust distance from bottom
+        right: 16,  // Adjust distance from right
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end',
+        zIndex: 1000, // Ensure it stays above other elements
+      }}
+    >
+      <Typography variant="body2" sx={{ fontWeight: 'bold', lineHeight: 1 }}>
+        {'v' + VERSION_NUMBER_MAJOR + '.' + VERSION_NUMBER_MINOR + '.' + VERSION_NUMBER_PATCH}
+      </Typography>
+      <Typography variant="body2" sx={{ lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+        <Link
+          href="https://github.com/DonavanMartin/SwingCollisionSimulator"
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ textDecoration: 'none', color: 'primary.main', display: 'flex', alignItems: 'center' }}
+        >
+          <GitHubIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
+          GitHub
+        </Link>
+      </Typography>
+    </Box>
           </Grid>
         
           <Grid size={12}>

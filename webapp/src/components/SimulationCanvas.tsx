@@ -304,39 +304,42 @@ const SimulationCanvas: React.FC<ExtendedSimulationCanvasProps> = ({
       const displaySpeed1 = collisionOccurredRef.current ? finalV1Ref.current : speed1Ms;
       const displaySpeed2 = collisionOccurredRef.current ? finalV2Ref.current : speed2Ms;
 
-      if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
-        angle1SpriteRef.current.material.map?.dispose();
-        angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${(angle1Deg%360).toFixed(1)}°`).material.map;
-        angle1SpriteRef.current.material.map!.needsUpdate = true;
-        angle1ValueRef.current = angle1Deg;
-      }
-      if (speed1SpriteRef.current && displaySpeed1 !== speed1ValueRef.current) {
-        speed1SpriteRef.current.material.map?.dispose();
-        speed1SpriteRef.current.material.map = createTextSprite(
-          `Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`
-        ).material.map;
-        speed1SpriteRef.current.material.map!.needsUpdate = true;
-        speed1ValueRef.current = displaySpeed1;
-      }
-      if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
-        angle2SpriteRef.current.material.map?.dispose();
-        angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${(angle2Deg%360).toFixed(1)}°`).material.map;
-        angle2SpriteRef.current.material.map!.needsUpdate = true;
-        angle2ValueRef.current = angle2Deg;
-      }
-      if (speed2SpriteRef.current && displaySpeed2 !== speed2ValueRef.current) {
-        speed2SpriteRef.current.material.map?.dispose();
-        speed2SpriteRef.current.material.map = createTextSprite(
-          `Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`
-        ).material.map;
-        speed2SpriteRef.current.material.map!.needsUpdate = true;
-        speed2ValueRef.current = displaySpeed2;
-      }
-      if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
-        fpsSpriteRef.current.material.map?.dispose();
-        fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
-        fpsSpriteRef.current.material.map!.needsUpdate = true;
-        fpsValueRef.current = fpsRef.current.value;
+      if (!collisionOccurredRef.current || (collisionOccurredRef.current && displaySpeed1 !== 0 && displaySpeed2 !==0)) {
+  
+        if (angle1SpriteRef.current && angle1Deg !== angle1ValueRef.current) {
+          angle1SpriteRef.current.material.map?.dispose();
+          angle1SpriteRef.current.material.map = createTextSprite(`Angle 1: ${(angle1Deg%360).toFixed(1)}°`).material.map;
+          angle1SpriteRef.current.material.map!.needsUpdate = true;
+          angle1ValueRef.current = angle1Deg;
+        }
+        if (speed1SpriteRef.current && displaySpeed1 !== speed1ValueRef.current) {
+          speed1SpriteRef.current.material.map?.dispose();
+          speed1SpriteRef.current.material.map = createTextSprite(
+            `Vitesse 1: ${displaySpeed1.toFixed(2)} m/s`
+          ).material.map;
+          speed1SpriteRef.current.material.map!.needsUpdate = true;
+          speed1ValueRef.current = displaySpeed1;
+        }
+        if (angle2SpriteRef.current && angle2Deg !== angle2ValueRef.current) {
+          angle2SpriteRef.current.material.map?.dispose();
+          angle2SpriteRef.current.material.map = createTextSprite(`Angle 2: ${(angle2Deg%360).toFixed(1)}°`).material.map;
+          angle2SpriteRef.current.material.map!.needsUpdate = true;
+          angle2ValueRef.current = angle2Deg;
+        }
+        if (speed2SpriteRef.current && displaySpeed2 !== speed2ValueRef.current) {
+          speed2SpriteRef.current.material.map?.dispose();
+          speed2SpriteRef.current.material.map = createTextSprite(
+            `Vitesse 2: ${displaySpeed2.toFixed(2)} m/s`
+          ).material.map;
+          speed2SpriteRef.current.material.map!.needsUpdate = true;
+          speed2ValueRef.current = displaySpeed2;
+        }
+        if (fpsSpriteRef.current && fpsRef.current.value !== fpsValueRef.current) {
+          fpsSpriteRef.current.material.map?.dispose();
+          fpsSpriteRef.current.material.map = createTextSprite(`FPS: ${Math.round(fpsRef.current.value)}`).material.map;
+          fpsSpriteRef.current.material.map!.needsUpdate = true;
+          fpsValueRef.current = fpsRef.current.value;
+        }
       }
 
       rendererRef.current.render(sceneRef.current, cameraRef.current);
