@@ -107,8 +107,8 @@ const App: React.FC = () => {
       // Start simulation
       try {
         const { age, maxHeight, mass1Lbs, mass2Lbs, vInit1, vInit2 } = params;
-        if (isNaN(age) || ![1, 2, 3, 4, 5].includes(age)) {
-          throw new Error("L'âge doit être entre 1 et 5 ans.");
+        if (isNaN(age) || age < 1 || age > 100) {
+          throw new Error("L'âge doit être entre 1 et 100 ans.");
         }
         if (isNaN(maxHeight) || maxHeight <= 0) {
           throw new Error('La hauteur doit être > 0.');

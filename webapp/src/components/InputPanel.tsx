@@ -38,13 +38,13 @@ const InputPanel: React.FC<InputPanelProps> = ({ params, updateParams, toggleSim
       <Box display="flex" flexDirection="column" gap={1}>
         <TextField
           select
-          label="Âge de l'enfant (ans)"
+          label="Âge de la victime (ans)"
           value={params.age}
           onChange={(e) => updateParams({ age: parseInt(e.target.value) })}
           size="small"
           sx={{ width: 120 }}
         >
-          {[1, 2, 3, 4, 5].map((age) => (
+          {Array.from({ length: 100 }, (_, i) => i + 1).map((age) => (
             <MenuItem key={age} value={age}>
               {age}
             </MenuItem>

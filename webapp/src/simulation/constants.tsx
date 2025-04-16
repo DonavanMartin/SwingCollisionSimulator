@@ -62,6 +62,108 @@ export const ANTHROPOMETRIC_DATA: { [age: number]: AnthropometricData } = {
     vertebrae_strength_mpa: [5, 10],
     head_mass_kg: 4.0,
   },
+  6: {
+    circumference_mm: 255,
+    neck_height_mm: 75,
+    vertebrae_strength_mpa: [5.5, 10.5],
+    head_mass_kg: 4.2,
+  },
+  7: {
+    circumference_mm: 265,
+    neck_height_mm: 80,
+    vertebrae_strength_mpa: [6, 11],
+    head_mass_kg: 4.4,
+  },
+  8: {
+    circumference_mm: 275,
+    neck_height_mm: 85,
+    vertebrae_strength_mpa: [6.5, 11.5],
+    head_mass_kg: 4.6,
+  },
+  9: {
+    circumference_mm: 285,
+    neck_height_mm: 90,
+    vertebrae_strength_mpa: [7, 12],
+    head_mass_kg: 4.8,
+  },
+  10: {
+    circumference_mm: 295,
+    neck_height_mm: 95,
+    vertebrae_strength_mpa: [7.5, 12.5],
+    head_mass_kg: 5.0,
+  },
+  11: {
+    circumference_mm: 305,
+    neck_height_mm: 100,
+    vertebrae_strength_mpa: [8, 13],
+    head_mass_kg: 5.1,
+  },
+  12: {
+    circumference_mm: 315,
+    neck_height_mm: 105,
+    vertebrae_strength_mpa: [8.5, 13.5],
+    head_mass_kg: 5.2,
+  },
+  13: {
+    circumference_mm: 325,
+    neck_height_mm: 110,
+    vertebrae_strength_mpa: [9, 14],
+    head_mass_kg: 5.3,
+  },
+  14: {
+    circumference_mm: 335,
+    neck_height_mm: 115,
+    vertebrae_strength_mpa: [9.5, 14.5],
+    head_mass_kg: 5.4,
+  },
+  15: {
+    circumference_mm: 345,
+    neck_height_mm: 120,
+    vertebrae_strength_mpa: [10, 15],
+    head_mass_kg: 5.5,
+  },
+  16: {
+    circumference_mm: 355,
+    neck_height_mm: 125,
+    vertebrae_strength_mpa: [10.5, 15.5],
+    head_mass_kg: 5.6,
+  },
+  17: {
+    circumference_mm: 365,
+    neck_height_mm: 130,
+    vertebrae_strength_mpa: [11, 16],
+    head_mass_kg: 5.7,
+  },
+  18: {
+    circumference_mm: 375,
+    neck_height_mm: 135,
+    vertebrae_strength_mpa: [11.5, 16.5],
+    head_mass_kg: 5.8,
+  },
+  // Adultes (19-60 ans) : Valeurs stabilisées
+  ...Object.fromEntries(
+    Array.from({ length: 42 }, (_, i) => i + 19).map((age) => [
+      age,
+      {
+        circumference_mm: 380,
+        neck_height_mm: 140,
+        vertebrae_strength_mpa: [12, 17],
+        head_mass_kg: 5.9,
+      },
+    ])
+  ),
+  // Personnes âgées (61-100 ans) : Légère diminution
+  ...Object.fromEntries(
+    Array.from({ length: 40 }, (_, i) => i + 61).map((age) => [
+      age,
+      {
+        circumference_mm: 375 - (age - 60) * 0.5, // Légère diminution
+        neck_height_mm: 135 - (age - 60) * 0.2, // Réduction progressive
+        vertebrae_strength_mpa: [11.5 - (age - 60) * 0.05, 16.5 - (age - 60) * 0.05], // Perte de résistance
+        head_mass_kg: 5.8,
+      },
+    ])
+  ),
 };
 
 // Risk thresholds
