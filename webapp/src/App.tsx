@@ -4,7 +4,7 @@ import InputPanel from './components/InputPanel';
 import ResultsPanel from './components/ResultsPanel';
 import SimulationCanvas from './components/SimulationCanvas';
 import { SimulationParams, CollisionResults } from './components/simulationCanvas/types';
-import { DEFAULT_AGE, DEFAULT_IMPACTTYPE, DEFAULT_MASS1LBS, DEFAULT_MASS2LBS, DEFAULT_MAXHEIGHT, DEFAULT_VINIT1, DEFAULT_VINIT2, LENGTH_SWING, VERSION_NUMBER_MAJOR, VERSION_NUMBER_MINOR, VERSION_NUMBER_PATCH } from './simulation/constants';
+import { DEFAULT_AGE, DEFAULT_COLLISION_TIME, DEFAULT_IMPACTTYPE, DEFAULT_MASS1LBS, DEFAULT_MASS2LBS, DEFAULT_MAXHEIGHT, DEFAULT_VINIT1, DEFAULT_VINIT2, LENGTH_SWING, VERSION_NUMBER_MAJOR, VERSION_NUMBER_MINOR, VERSION_NUMBER_PATCH } from './simulation/constants';
 import GitHubIcon from '@mui/icons-material/GitHub';
 
 const theme = createTheme({
@@ -51,6 +51,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 const App: React.FC = () => {
   const [params, setParams] = useState<SimulationParams>({
     age: DEFAULT_AGE,
+    collisionTime: DEFAULT_COLLISION_TIME,
     maxHeight: DEFAULT_MAXHEIGHT,
     mass1Lbs: DEFAULT_MASS1LBS,
     mass2Lbs: DEFAULT_MASS2LBS,

@@ -3,7 +3,6 @@
 import * as THREE from 'three';
 import {
   G,
-  COLLISION_TIME,
   LENGTH_SWING,
   LBS_TO_KG,
   ANTHROPOMETRIC_DATA,
@@ -36,7 +35,7 @@ export function calculateVelocity(
 export function calculateForce(
   velocity: number,
   mass: number,
-  collisionTime: number = COLLISION_TIME
+  collisionTime: number
 ): number {
   return (mass * velocity) / collisionTime;
 }

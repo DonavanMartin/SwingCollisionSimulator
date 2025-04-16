@@ -3,6 +3,7 @@ import { Box, Typography, TextField, MenuItem, FormControl, FormLabel, RadioGrou
 
 interface SimulationParams {
   age: number;
+  collisionTime: number; // 10 ms, typique pour collisions rigides // Plage : 5–20 ms (0.005–0.020 s) selon la rigidité.
   maxHeight: number;
   mass1Lbs: number;
   mass2Lbs: number;
@@ -50,6 +51,14 @@ const InputPanel: React.FC<InputPanelProps> = ({ params, updateParams, toggleSim
             </MenuItem>
           ))}
         </TextField>
+        <TextField
+          label="Temps de collision (s)"
+          type="number"
+          value={params.collisionTime}
+          onChange={(e) => handleNumberChange('collisionTime', e.target.value)}
+          size="small"
+          inputProps={{ step: 0.01, min: 0 }}
+        />
         <TextField
           label="Hauteur d'oscillation max (m)"
           type="number"

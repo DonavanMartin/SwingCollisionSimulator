@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 export interface SimulationParams {
   age: number;
+  collisionTime: number;
   maxHeight: number;
   mass1Lbs: number;
   mass2Lbs: number;

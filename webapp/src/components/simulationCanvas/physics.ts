@@ -23,7 +23,6 @@ import {
   LBS_TO_KG,
   HIC_THRESHOLD,
   PEAK_ACCELERATION_THRESHOLD,
-  COLLISION_TIME,
   calculateHIC,
   CONCUSSION_ACCELERATION_THRESHOLD,
 } from '../../simulation/constants';
@@ -94,20 +93,20 @@ export const updatePhysicsAndCollision = (
     const velocity2 = v2;
     const relativeVelocity = Math.abs(velocity1) + Math.abs(velocity2);
     const reducedMass = (ball1.mass * ball2.mass) / (ball1.mass + ball2.mass) || ball1.mass;
-    const force = calculateForce(relativeVelocity, reducedMass);
+    const force = calculateForce(relativeVelocity, reducedMass, params.collisionTime);
     const surfaceCm2 = calculateImpactSurface(params.age, params.impactType === 'frontal' ? 'frontal' : 'lateral');
     const pressureMPa = calculatePressure(force, surfaceCm2);
     const headMass = ANTHROPOMETRIC_DATA[params.age]?.head_mass_kg || 3.5;
     const accelerationMs2 = calculateAcceleration(force, headMass);
     // Calculate HIC
-    // Assume a triangular acceleration pulse over COLLISION_TIME
+    // Assume a triangular acceleration pulse over params.collisionTime
     const peakAcceleration = accelerationMs2;
     const accelerationProfile = [
       { time_s: 0, acceleration_ms2: 0 },
-      { time_s: COLLISION_TIME / 2, acceleration_ms2: peakAcceleration }, // Peak at midpoint
-      { time_s: COLLISION_TIME, acceleration_ms2: 0 }, // Back to 0
+      { time_s: params.collisionTime / 2, acceleration_ms2: peakAcceleration }, // Peak at midpoint
+      { time_s: params.collisionTime, acceleration_ms2: 0 }, // Back to 0
     ];
-    const hic = calculateHIC(accelerationProfile);
+    const hic = calculateHIC(accelerationProfile,params.collisionTime);
 
     // Evaluate safety
     const isSafe =
